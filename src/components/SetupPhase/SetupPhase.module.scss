@@ -1,0 +1,124 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.heading {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.subheading {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 100px auto;
+  gap: $space-2;
+  align-items: stretch;
+}
+
+.nameInput {
+  @include input-base;
+}
+
+.amountInput {
+  @include input-base;
+  text-align: center;
+}
+
+.addButton {
+  @include button-primary;
+  padding-inline: $space-5;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.listItem {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+}
+
+.playerName {
+  flex: 1;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerBuyIn {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+.removeButton {
+  @include button-ghost;
+  min-height: 32px;
+  width: 32px;
+  padding: 0;
+  font-size: $font-size-md;
+}
+
+.empty {
+  text-align: center;
+  padding: $space-6;
+  color: $text-muted;
+  border: 1px dashed $border-subtle;
+  border-radius: $radius-lg;
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: $space-3;
+  padding: $space-3;
+  background: linear-gradient(
+    to top,
+    $bg-app 60%,
+    transparent
+  );
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.summary {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.startButton {
+  @include button-primary;
+  padding: $space-4;
+  font-size: $font-size-lg;
+}

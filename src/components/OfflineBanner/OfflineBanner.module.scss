@@ -1,0 +1,27 @@
+@use '../../styles/variables' as *;
+
+.banner {
+  position: sticky;
+  top: 0;
+  z-index: $z-banner;
+  text-align: center;
+  padding: $space-2 $space-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-on-accent;
+}
+
+.connecting {
+  background: $bg-surface-elevated;
+  color: $text-secondary;
+}
+
+.offline {
+  background: $warning;
+  color: $text-on-accent;
+}
+
+.error {
+  background: $negative;
+  color: $text-primary;
+}

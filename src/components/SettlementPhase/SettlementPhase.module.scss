@@ -1,0 +1,174 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.phase {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.heading {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.warning {
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  border: 1px solid $warning;
+  background: rgba(245, 166, 35, 0.1);
+  color: $text-primary;
+  font-size: $font-size-sm;
+  line-height: 1.55;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.resultRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+}
+
+.resultIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resultName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.resultMeta {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+.resultNet {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.resultNetPos {
+  color: $positive;
+}
+
+.resultNetNeg {
+  color: $negative;
+}
+
+.resultActive {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $accent;
+  text-transform: uppercase;
+}
+
+.transfers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.transferRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+}
+
+.transferFrom {
+  flex: 1;
+  font-weight: $font-weight-semibold;
+  color: $negative;
+  text-align: start;
+}
+
+.transferTo {
+  flex: 1;
+  font-weight: $font-weight-semibold;
+  color: $positive;
+  text-align: end;
+}
+
+.transferArrow {
+  color: $text-muted;
+}
+
+.transferAmount {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $accent;
+  font-variant-numeric: tabular-nums;
+  padding: 0 $space-2;
+}
+
+.empty {
+  text-align: center;
+  padding: $space-5;
+  color: $text-muted;
+  border: 1px dashed $border-subtle;
+  border-radius: $radius-lg;
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  padding: $space-3 0;
+  background: linear-gradient(
+    to top,
+    $bg-app 65%,
+    transparent
+  );
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.backButton {
+  @include button-secondary;
+  padding: $space-3;
+}
+
+.newGameButton {
+  @include button-ghost;
+  font-size: $font-size-sm;
+}

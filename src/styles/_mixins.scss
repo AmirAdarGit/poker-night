@@ -1,0 +1,103 @@
+@use 'variables' as *;
+
+@mixin card {
+  background: $bg-surface-raised;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3 $space-5;
+  border-radius: $radius-md;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-md;
+  cursor: pointer;
+  transition: background $dur-fast $ease-out, transform $dur-fast $ease-out,
+    border-color $dur-fast $ease-out, color $dur-fast $ease-out;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):active {
+    transform: scale(0.98);
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $accent;
+  color: $text-on-accent;
+
+  &:not(:disabled):hover {
+    background: $accent-hover;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: $bg-surface-elevated;
+  color: $text-primary;
+  border-color: $border-strong;
+
+  &:not(:disabled):hover {
+    background: $bg-surface-raised;
+  }
+}
+
+@mixin button-ghost {
+  @include button-base;
+  background: transparent;
+  color: $text-secondary;
+
+  &:not(:disabled):hover {
+    background: $bg-surface-raised;
+    color: $text-primary;
+  }
+}
+
+@mixin button-danger {
+  @include button-base;
+  background: transparent;
+  color: $negative;
+  border-color: $negative;
+
+  &:not(:disabled):hover {
+    background: $negative;
+    color: $text-primary;
+  }
+}
+
+@mixin input-base {
+  display: block;
+  width: 100%;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  border: 1px solid $border-strong;
+  background: $bg-input;
+  color: $text-primary;
+  font: inherit;
+  font-size: $font-size-md;
+  min-height: 44px;
+  transition: border-color $dur-fast $ease-out;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $accent;
+  }
+}

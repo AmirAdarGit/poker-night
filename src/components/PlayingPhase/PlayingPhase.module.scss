@@ -1,0 +1,107 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.phase {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.statsBar {
+  @include card;
+  display: flex;
+  align-items: stretch;
+  padding: $space-3 $space-4;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+}
+
+.statValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $text-muted;
+}
+
+.statDivider {
+  width: 1px;
+  background: $border-subtle;
+  margin: $space-1 0;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.addPlayerButton {
+  @include button-secondary;
+  border-style: dashed;
+  width: 100%;
+}
+
+.addForm {
+  display: grid;
+  grid-template-columns: 1fr 100px auto auto;
+  gap: $space-2;
+  align-items: stretch;
+}
+
+.nameInput {
+  @include input-base;
+}
+
+.amountInput {
+  @include input-base;
+  text-align: center;
+}
+
+.confirmAdd {
+  @include button-primary;
+}
+
+.cancelAdd {
+  @include button-ghost;
+  width: 44px;
+  padding: 0;
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: $space-3;
+  padding: $space-3 0;
+  background: linear-gradient(
+    to top,
+    $bg-app 65%,
+    transparent
+  );
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.settleButton {
+  @include button-primary;
+  padding: $space-4;
+  font-size: $font-size-lg;
+}
+
+.newGameButton {
+  @include button-ghost;
+  font-size: $font-size-sm;
+}

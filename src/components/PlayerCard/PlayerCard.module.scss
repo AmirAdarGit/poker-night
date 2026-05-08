@@ -1,0 +1,156 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.card {
+  @include card;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  position: relative;
+  transition: opacity $dur-base $ease-out;
+}
+
+.cardOut {
+  opacity: 0.78;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+
+.netBadge {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  padding: $space-1 $space-3;
+  border-radius: $radius-pill;
+  font-variant-numeric: tabular-nums;
+}
+
+.netBadgePos {
+  background: rgba(61, 220, 151, 0.15);
+  color: $positive;
+}
+
+.netBadgeNeg {
+  background: rgba(255, 94, 94, 0.15);
+  color: $negative;
+}
+
+.activeBadge {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $accent;
+  padding: $space-1 $space-3;
+  border: 1px solid $accent;
+  border-radius: $radius-pill;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.actionGroup {
+  display: flex;
+  gap: $space-2;
+  align-items: stretch;
+}
+
+.amountInput {
+  @include input-base;
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.rebuyButton {
+  @include button-secondary;
+  flex-shrink: 0;
+}
+
+.cashOutButton {
+  @include button-primary;
+  width: 100%;
+}
+
+.confirmButton {
+  @include button-primary;
+  flex-shrink: 0;
+}
+
+.cancelButton {
+  @include button-ghost;
+  width: 44px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cashedOutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+  background: $bg-surface-elevated;
+}
+
+.cashedOutLabel {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.undoButton {
+  @include button-ghost;
+  font-size: $font-size-sm;
+  min-height: 32px;
+  padding: $space-1 $space-3;
+}
+
+.removeLink {
+  align-self: flex-start;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: $text-disabled;
+  font: inherit;
+  font-size: $font-size-xs;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-top: $space-1;
+
+  &:hover {
+    color: $negative;
+  }
+}
