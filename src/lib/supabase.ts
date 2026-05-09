@@ -13,6 +13,10 @@ export const supabase: SupabaseClient | null =
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
+          // PKCE keeps OAuth code-exchange state on the app's own origin,
+          // so Chrome's bounce-tracking mitigations don't wipe it
+          // mid-flow. Required for reliable Google sign-in in Chrome.
+          flowType: 'pkce',
         },
         realtime: { params: { eventsPerSecond: 10 } },
       })
