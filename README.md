@@ -1,67 +1,111 @@
 # Poker Night 🃏
 
-Hebrew (RTL) poker night money tracker. Built with **Vite + React + TypeScript** and **Supabase** for real-time multi-device sync. Deploys to **Vercel** with zero config.
+Hebrew (RTL) poker night money tracker with **real-time multi-device sync**, **user accounts**, and **lifetime P&L history**. Built with Vite + React + TypeScript and Supabase. Deploys to Vercel with zero config.
 
-## What it does
+## Features
 
-Three phases:
-
-1. **Setup** — host enters players locally. Default buy-in is 50 ₪. Minimum 2 to start.
-2. **Playing** — track buy-ins (rebuys), cash-outs, undo mistakes, add mid-game players, see pot/active/cashed-out counts at all times.
-3. **Settlement** — see each player's net win/loss sorted by winnings, plus a **minimal list of "X pays Y"** transfers using a greedy debtor↔creditor matcher.
-
-The killer feature: share the link mid-game and every device watching it sees updates in real-time via Supabase Realtime.
+- **Setup → Playing → Settlement** phase flow.
+- **Real-time sync**: share a link mid-game, every device watching it sees updates live.
+- **Auth**: Google OAuth (primary) + email/password fallback.
+- **Multi-user**: every player is a registered user. Hosts pick from past co-players or invite by email.
+- **Host-only edits**: only the host of a game can change buy-ins, cash-outs, etc. Others watch live.
+- **History**: every signed-in user sees their past games + lifetime profit/loss + per-opponent breakdown.
+- **Offline tolerance**: keeps working with the last-known state and syncs when connectivity returns.
 
 ## Quick start
 
 ```bash
 npm install
 cp .env.example .env
-# fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+# fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (publishable key)
 npm run dev
 ```
 
 ## Setting up Supabase
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run [`supabase/schema.sql`](./supabase/schema.sql). This creates the `games` table, RLS policies, and adds the table to the realtime publication.
-3. Copy your project's URL and `anon` key into `.env`.
+### 1. Create the project
+[supabase.com](https://supabase.com) → **New project**.
 
-The schema gives anyone with a game ID full read/write access. Game IDs are 8 random characters from a 32-char alphabet (~10¹² combinations), so they act as unguessable bearer tokens — fine for a hobby app among friends. If you want stricter access, layer auth on top.
+### 2. Run the schema
+**SQL Editor → New query** → paste [`supabase/schema.sql`](./supabase/schema.sql) → **Run**.
+
+> The schema **wipes** any existing `games` / `profiles` / `game_players` tables. Re-running is safe but destructive — only do it on a project where you're OK losing prior data.
+
+It creates:
+- `profiles` (extends `auth.users` with display name + email)
+- `games` (with `host_id`, `state`, `completed_at`)
+- `game_players` (link table for history queries)
+- A trigger that auto-creates a `profiles` row when a user signs up
+- RLS policies (see below)
+- Realtime publication for `games`
+
+### 3. Enable email auth
+**Authentication → Providers → Email** → Enable. For dev convenience disable "Confirm email" so signup is one-step.
+
+### 4. Enable Google OAuth (recommended)
+1. **Authentication → Providers → Google** → toggle on.
+2. Copy the **Callback URL** Supabase shows you.
+3. Go to [Google Cloud Console](https://console.cloud.google.com) → create or pick a project → **APIs & Services → Credentials → + Create credentials → OAuth client ID**:
+   - Type: **Web application**
+   - **Authorized redirect URIs**: paste the Supabase callback URL
+4. Copy the resulting **Client ID** and **Client Secret** back into Supabase's Google provider form.
+5. **Save**.
+
+### 5. Configure URL allowlist
+**Authentication → URL Configuration**:
+- **Site URL**: your Vercel prod URL (e.g. `https://poker-night.vercel.app`)
+- **Redirect URLs**: add both:
+  - `http://localhost:5173`
+  - `https://poker-night.vercel.app` (and any preview URLs you use)
+
+### 6. Grab credentials for the app
+**Project Settings → API**:
+- **Project URL** → `VITE_SUPABASE_URL`
+- **Publishable key** (`sb_publishable_...`) → `VITE_SUPABASE_ANON_KEY`
+
+> Never use the **Secret key** in this app. It bypasses RLS and would expose every table to the browser.
+
+## Permissions model
+
+| Action | Who |
+|---|---|
+| Create a game | Logged-in user (becomes the host) |
+| Edit a game (buy-ins, cash-outs, phase transitions, add/remove players) | Host only |
+| View a game | **Anyone with the link** — logged in or not. The 8-char ID acts as a bearer token. |
+| Add/remove `game_players` rows | Host only (enforced by RLS) |
+| Read `profiles` | Public (so opponent names render in history) |
+| See history | Per user — only games where you participated |
 
 ## Deploying to Vercel
 
-```bash
-npm i -g vercel
-vercel
-```
-
-Then set the env vars in the Vercel dashboard (Project → Settings → Environment Variables):
+Connect the GitHub repo on [vercel.com/new](https://vercel.com/new). Vercel auto-detects Vite. In **Environment Variables** set:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-[`vercel.json`](./vercel.json) is set up to rewrite all routes to `index.html` so that opening `?g=<id>` links works under all paths.
+[`vercel.json`](./vercel.json) already rewrites all routes to `index.html` so `?g=<id>` links work.
+
+After deploy, push to `main` to redeploy. For ad-hoc CLI deploys: `npm i -g vercel && vercel --prod`.
 
 ## Architecture
 
 ### Sync model
 
-- **Single source of truth** is the row in Supabase `games` keyed by short ID.
+- Single source of truth is the row in Supabase `games` keyed by short ID.
 - **Setup phase is local-only**: no row exists until "start game" is pressed. Avoids polluting the DB with abandoned setups.
-- **URL contains only the game ID**: format `?g=<id>`. No state in the URL/hash.
-- **Optimistic UI**: every action updates local state immediately and pushes to Supabase. On failure, a toast surfaces the error; the next dispatch retries.
-- **Realtime subscription**: all devices viewing the game subscribe to changes on its row. Incoming updates replace local state.
-- **Offline fallback**: if the device is offline (or Supabase is unreachable), the app keeps working locally with the last-known state and shows an offline banner. When connectivity returns, the latest local state is pushed (last-write-wins).
+- **URL contains only the game ID**: format `?g=<id>`. No state in the URL.
+- **Optimistic UI**: every host action updates local state immediately and pushes to Supabase. On failure, a toast surfaces the error.
+- **Realtime subscription**: all devices viewing the game subscribe to row changes via Supabase Realtime.
+- **Offline fallback**: if Supabase is unreachable, the app keeps working locally with the last-known state and shows an offline banner. When connectivity returns, the latest local state is pushed (last-write-wins).
 - **localStorage cache**: each game's last-seen state is cached, so reopening a link is instant even before Supabase responds.
-- **Last-write-wins**: friends won't be editing the same field at the same millisecond. If two devices race, the later push wins. Document accordingly.
+- **Last-write-wins**: friends won't be editing the same field at the same millisecond. If two devices race, the later push wins.
 
-### State
+### State model
 
 ```ts
 interface Player {
-  id: string;
-  name: string;
+  id: string;                  // = auth.users.id (uuid)
+  name: string;                // snapshotted from profiles.display_name
   buyIns: number[];
   cashedOut: number | null;
   joinedAt: number;
@@ -73,48 +117,54 @@ interface GameState {
 }
 ```
 
-Reducer in [`src/reducer/gameReducer.ts`](./src/reducer/gameReducer.ts). Settlement algorithm and tests in [`src/lib/settlement.ts`](./src/lib/settlement.ts) and [`src/lib/settlement.test.ts`](./src/lib/settlement.test.ts).
+### History & P&L
+
+- `game_players` is the source of truth for "which user played in which game."
+- It's kept in sync with `state.players` after every successful host push (see `useGameSync.ts`).
+- The History view queries `game_players` for a user, joins back to `games`, and computes:
+  - **Lifetime net**: sum of `getNet(me)` across all settled games where I cashed out.
+  - **Per-opponent net**: my total net across the games where each opponent also played. (Not "money I won from them directly" — that's not well-defined in poker — but a faithful "in games where X played, you came out ahead/behind by N₪.")
 
 ### Project layout
 
 ```
 src/
-  App.tsx                       # phase router + sync wiring
+  App.tsx                          # phase + view router; wires auth + sync
   main.tsx
-  types.ts                      # GameState, Player, helpers
+  types.ts
   styles/
-    _variables.scss             # ★ ONLY file with hex colors
+    _variables.scss                # ★ ONLY file with hex colors
     _mixins.scss
     global.scss
-  lib/
-    supabase.ts                 # client + fetch/upsert helpers
-    gameId.ts                   # short URL-safe IDs
-    settlement.ts               # greedy debtor↔creditor matcher
-    settlement.test.ts          # vitest suite
-    storage.ts                  # localStorage cache
-    share.ts                    # navigator.share + clipboard fallback
+  contexts/
+    AuthContext.tsx                # session, profile, signIn/signOut
   hooks/
-    useGameSync.ts              # realtime + optimistic + offline
+    useGameSync.ts                 # realtime + optimistic + host-guard
     useOnlineStatus.ts
   reducer/
     gameReducer.ts
+  lib/
+    supabase.ts
+    gameId.ts
+    settlement.ts                  # greedy debtor↔creditor matcher
+    settlement.test.ts
+    storage.ts
+    share.ts
+    players.ts                     # lookup by email + recent co-players
+    history.ts                     # fetch games + compute lifetime / opponent stats
   components/
-    SetupPhase/
-    PlayingPhase/
-    SettlementPhase/
+    AuthScreen/                    # login + signup (Google + email/pw)
+    CompleteProfile/               # display_name capture if missing
+    UserMenu/                      # header user dropdown
+    HistoryView/                   # past games + lifetime + opponent breakdown
+    SetupPhase/                    # add players (recent + email lookup)
+    PlayingPhase/                  # buy-ins, cash-outs (host); live view (others)
+    SettlementPhase/               # net results + minimal transfers
     PlayerCard/
     OfflineBanner/
     Toast/
     ConfirmDialog/
 ```
-
-## Conventions
-
-- **TypeScript strict mode** with `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`, `noUncheckedIndexedAccess`.
-- **SCSS modules** per component. Global partials live in `src/styles`.
-- **No hex colors anywhere outside `src/styles/_variables.scss`.** Every `.module.scss` imports the variables and uses named tokens. This rule is non-negotiable.
-- **No CSS frameworks**, no UI libraries, no external state libraries, no router.
-- **Reducer + `URLSearchParams`** is enough.
 
 ## Scripts
 
@@ -126,6 +176,13 @@ npm run typecheck   # tsc --noEmit
 npm run test        # run vitest once
 npm run test:watch  # vitest in watch mode
 ```
+
+## Conventions
+
+- TypeScript strict + `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`, `noUncheckedIndexedAccess`.
+- SCSS modules per component. Global partials in `src/styles`.
+- **No hex colors outside `src/styles/_variables.scss`.**
+- No CSS frameworks, no UI libraries, no external state libraries, no router.
 
 ## License
 

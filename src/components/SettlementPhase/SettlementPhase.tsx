@@ -13,12 +13,14 @@ interface Props {
   players: Player[];
   onBackToPlaying: () => void;
   onRequestNewGame: () => void;
+  isHost: boolean;
 }
 
 export function SettlementPhase({
   players,
   onBackToPlaying,
   onRequestNewGame,
+  isHost,
 }: Props) {
   const ranked = useMemo(
     () =>
@@ -119,19 +121,21 @@ export function SettlementPhase({
       </div>
 
       <div className={styles.footer}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={onBackToPlaying}
-        >
-          חזרה למשחק
-        </button>
+        {isHost && (
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={onBackToPlaying}
+          >
+            חזרה למשחק
+          </button>
+        )}
         <button
           type="button"
           className={styles.newGameButton}
           onClick={onRequestNewGame}
         >
-          משחק חדש
+          {isHost ? 'משחק חדש' : 'יציאה מהצפייה'}
         </button>
       </div>
     </section>

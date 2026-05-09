@@ -1,0 +1,136 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-5 $space-4;
+}
+
+.card {
+  @include card;
+  width: 100%;
+  max-width: 420px;
+  padding: $space-7 $space-5;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  box-shadow: $shadow-lg;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0 0 $space-2;
+  font-size: $font-size-sm;
+  color: $text-muted;
+  text-align: center;
+}
+
+.googleButton {
+  @include button-secondary;
+  background: $text-primary;
+  color: $text-on-accent;
+  border-color: transparent;
+  font-size: $font-size-md;
+
+  &:not(:disabled):hover {
+    background: $text-secondary;
+  }
+}
+
+.googleIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-pill;
+  background: $accent;
+  color: $text-on-accent;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-sm;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  color: $text-muted;
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $border-subtle;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.input {
+  @include input-base;
+}
+
+.error {
+  background: rgba(255, 94, 94, 0.12);
+  color: $negative;
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+}
+
+.info {
+  background: rgba(61, 220, 151, 0.12);
+  color: $positive;
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+}
+
+.submitButton {
+  @include button-primary;
+}
+
+.footer {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.toggleButton {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: $accent;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover {
+    color: $accent-hover;
+  }
+}
+
+.cancelButton {
+  @include button-ghost;
+  font-size: $font-size-sm;
+  margin-top: $space-2;
+}

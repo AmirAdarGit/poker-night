@@ -4,11 +4,13 @@ import {
   fetchGame,
   isSupabaseConfigured,
   supabase,
-  upsertGame,
+  syncGamePlayers,
+  updateGameState,
 } from '../lib/supabase';
 import { loadCachedGame, saveCachedGame } from '../lib/storage';
 import { createEmptyState, type GameState } from '../types';
 import { useOnlineStatus } from './useOnlineStatus';
+import { useAuth } from '../contexts/AuthContext';
 
 export type SyncStatus =
   | 'local' // no game ID yet (setup before start)
@@ -22,7 +24,20 @@ export interface GameSync {
   dispatch: (action: Action) => void;
   syncStatus: SyncStatus;
   lastError: string | null;
+  hostId: string | null;
+  isHost: boolean;
 }
+
+const NON_LOCAL_ACTIONS = new Set<Action['type']>([
+  'add-player',
+  'remove-player',
+  'add-buy-in',
+  'cash-out',
+  'undo-cash-out',
+  'start-game',
+  'go-to-settlement',
+  'back-to-playing',
+]);
 
 export function useGameSync(gameId: string | null): GameSync {
   const initialFromCache: GameState =
@@ -33,13 +48,18 @@ export function useGameSync(gameId: string | null): GameSync {
     gameId ? 'connecting' : 'local',
   );
   const [lastError, setLastError] = useState<string | null>(null);
+  const [hostId, setHostId] = useState<string | null>(null);
   const online = useOnlineStatus();
+  const { user } = useAuth();
+
+  const isHost = !gameId || (!!user && !!hostId && user.id === hostId);
 
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const pushSeqRef = useRef(0);
   const lastPushedRef = useRef<string>('');
+  const lastSyncedPlayerIdsRef = useRef<string>('');
   const pendingSinceOfflineRef = useRef<GameState | null>(null);
 
   // ---- Cache to localStorage ----
@@ -51,6 +71,7 @@ export function useGameSync(gameId: string | null): GameSync {
   useEffect(() => {
     if (!gameId) {
       setSyncStatus('local');
+      setHostId(null);
       return;
     }
     if (!isSupabaseConfigured || !supabase) {
@@ -63,12 +84,11 @@ export function useGameSync(gameId: string | null): GameSync {
     setSyncStatus(online ? 'connecting' : 'offline');
 
     fetchGame(gameId)
-      .then((remote) => {
-        if (cancelled) return;
-        if (remote) {
-          dispatch({ type: 'hydrate', state: remote });
-          lastPushedRef.current = JSON.stringify(remote);
-        }
+      .then((row) => {
+        if (cancelled || !row) return;
+        dispatch({ type: 'hydrate', state: row.state });
+        setHostId(row.host_id);
+        lastPushedRef.current = JSON.stringify(row.state);
         if (online) setSyncStatus('live');
       })
       .catch(() => {
@@ -91,9 +111,11 @@ export function useGameSync(gameId: string | null): GameSync {
         },
         (payload) => {
           const row = (payload.new ?? payload.old) as
-            | { state?: GameState }
+            | { state?: GameState; host_id?: string | null }
             | undefined;
-          const remote = row?.state;
+          if (!row) return;
+          if (row.host_id !== undefined) setHostId(row.host_id ?? null);
+          const remote = row.state;
           if (!remote) return;
           const remoteJson = JSON.stringify(remote);
           if (remoteJson === lastPushedRef.current) return;
@@ -116,7 +138,7 @@ export function useGameSync(gameId: string | null): GameSync {
     };
   }, [gameId, online]);
 
-  // ---- Reflect online/offline transitions in the indicator ----
+  // ---- Reflect online/offline transitions ----
   useEffect(() => {
     if (!gameId) return;
     if (!online) {
@@ -124,23 +146,29 @@ export function useGameSync(gameId: string | null): GameSync {
       pendingSinceOfflineRef.current = stateRef.current;
     } else if (syncStatus === 'offline') {
       setSyncStatus('connecting');
-      // Flush whatever the last local state was (last-write-wins).
       const pending = pendingSinceOfflineRef.current ?? stateRef.current;
       pendingSinceOfflineRef.current = null;
-      void pushState(gameId, pending);
+      if (isHost) void pushState(gameId, pending);
     }
-  }, [online, gameId, syncStatus]);
+  }, [online, gameId, syncStatus, isHost]);
 
-  // ---- Push helper ----
   const pushState = useCallback(
     async (id: string, next: GameState) => {
       const seq = ++pushSeqRef.current;
-      const result = await upsertGame(id, next);
-      if (seq !== pushSeqRef.current) return; // a newer push has been issued
+      const result = await updateGameState(id, next);
+      if (seq !== pushSeqRef.current) return;
       if (result.ok) {
         lastPushedRef.current = JSON.stringify(next);
         setLastError(null);
         if (online) setSyncStatus('live');
+
+        // Keep game_players link table in sync with the player roster.
+        const playerIds = next.players.map((p) => p.id).sort();
+        const playerIdsKey = playerIds.join(',');
+        if (playerIdsKey !== lastSyncedPlayerIdsRef.current) {
+          lastSyncedPlayerIdsRef.current = playerIdsKey;
+          void syncGamePlayers(id, playerIds);
+        }
       } else {
         setLastError(result.error);
         setSyncStatus(online ? 'error' : 'offline');
@@ -149,16 +177,26 @@ export function useGameSync(gameId: string | null): GameSync {
     [online],
   );
 
-  // ---- Wrapped dispatch: optimistic update + push ----
   const wrappedDispatch = useCallback(
     (action: Action) => {
+      // Block non-local mutating actions for non-hosts on a synced game.
+      if (
+        gameId &&
+        hostId &&
+        !isHost &&
+        NON_LOCAL_ACTIONS.has(action.type)
+      ) {
+        return;
+      }
+
       const before = stateRef.current;
       const next = gameReducer(before, action);
       dispatch(action);
 
-      if (!gameId) return; // setup phase, nothing to sync
-      if (action.type === 'hydrate') return; // came from network
-      if (next === before) return; // reducer rejected the action
+      if (!gameId) return;
+      if (action.type === 'hydrate') return;
+      if (action.type === 'reset') return;
+      if (next === before) return;
 
       if (!online) {
         pendingSinceOfflineRef.current = next;
@@ -166,8 +204,15 @@ export function useGameSync(gameId: string | null): GameSync {
       }
       void pushState(gameId, next);
     },
-    [gameId, online, pushState],
+    [gameId, hostId, isHost, online, pushState],
   );
 
-  return { state, dispatch: wrappedDispatch, syncStatus, lastError };
+  return {
+    state,
+    dispatch: wrappedDispatch,
+    syncStatus,
+    lastError,
+    hostId,
+    isHost,
+  };
 }

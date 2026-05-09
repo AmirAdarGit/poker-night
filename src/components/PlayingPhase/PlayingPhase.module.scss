@@ -42,6 +42,24 @@
   margin: $space-1 0;
 }
 
+.viewerBanner {
+  background: rgba(244, 208, 63, 0.12);
+  border: 1px solid $accent;
+  color: $text-primary;
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  text-align: center;
+}
+
+.lookupError {
+  font-size: $font-size-sm;
+  color: $negative;
+  background: rgba(255, 94, 94, 0.1);
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+}
+
 .players {
   display: flex;
   flex-direction: column;

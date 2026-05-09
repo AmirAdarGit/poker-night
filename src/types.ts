@@ -1,9 +1,19 @@
 export interface Player {
+  // Equals auth.users.id (uuid). Players are always registered users.
   id: string;
+  // Snapshotted from profiles.display_name when the player was added,
+  // so renaming yourself later doesn't rewrite past games.
   name: string;
   buyIns: number[];
   cashedOut: number | null;
   joinedAt: number;
+}
+
+export interface Profile {
+  id: string;
+  display_name: string;
+  email: string | null;
+  created_at?: string;
 }
 
 export type Phase = 'setup' | 'playing' | 'settlement';

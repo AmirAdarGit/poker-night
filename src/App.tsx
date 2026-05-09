@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import styles from './App.module.scss';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useGameSync } from './hooks/useGameSync';
 import { generateGameId, isValidGameId } from './lib/gameId';
 import {
@@ -8,7 +9,7 @@ import {
   setGameIdInUrl,
   shareGameLink,
 } from './lib/share';
-import { upsertGame } from './lib/supabase';
+import { createGame, syncGamePlayers } from './lib/supabase';
 import { clearCachedGame } from './lib/storage';
 import { SetupPhase } from './components/SetupPhase/SetupPhase';
 import { PlayingPhase } from './components/PlayingPhase/PlayingPhase';
@@ -16,14 +17,24 @@ import { SettlementPhase } from './components/SettlementPhase/SettlementPhase';
 import { OfflineBanner } from './components/OfflineBanner/OfflineBanner';
 import { Toast } from './components/Toast/Toast';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
+import { AuthScreen } from './components/AuthScreen/AuthScreen';
+import { CompleteProfile } from './components/CompleteProfile/CompleteProfile';
+import { UserMenu } from './components/UserMenu/UserMenu';
+import { HistoryView } from './components/HistoryView/HistoryView';
 
-export default function App() {
+type View = 'game' | 'history' | 'auth';
+
+function AppInner() {
+  const { user, profile, loading } = useAuth();
+
   const [gameId, setGameId] = useState<string | null>(() => {
     const fromUrl = readGameIdFromUrl();
     return fromUrl && isValidGameId(fromUrl) ? fromUrl : null;
   });
-  const { state, dispatch, syncStatus, lastError } = useGameSync(gameId);
+  const { state, dispatch, syncStatus, lastError, isHost } =
+    useGameSync(gameId);
 
+  const [view, setView] = useState<View>('game');
   const [toast, setToast] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -31,7 +42,6 @@ export default function App() {
     setToast(msg);
   }, []);
 
-  // Keep URL in sync with state.
   useEffect(() => {
     if (state.phase === 'setup' && !gameId) {
       setGameIdInUrl(null);
@@ -45,19 +55,26 @@ export default function App() {
   }, [lastError, showToast]);
 
   const handleStartGame = useCallback(async () => {
+    if (!user || !profile) {
+      setView('auth');
+      return;
+    }
     if (state.players.length < 2) return;
     const id = generateGameId();
     const next = { ...state, phase: 'playing' as const };
-    // Create the row first (best effort) so the share link works immediately.
-    const result = await upsertGame(id, next);
+    const result = await createGame(id, user.id, next);
     if (!result.ok) {
       showToast(`לא ניתן ליצור משחק: ${result.error}`);
-      // We still proceed locally — useGameSync will retry on the next dispatch.
+      return;
     }
+    await syncGamePlayers(
+      id,
+      next.players.map((p) => p.id),
+    );
     setGameId(id);
     setGameIdInUrl(id);
     dispatch({ type: 'hydrate', state: next });
-  }, [state, dispatch, showToast]);
+  }, [user, profile, state, dispatch, showToast]);
 
   const handleShare = useCallback(async () => {
     if (!gameId) return;
@@ -77,50 +94,122 @@ export default function App() {
     setGameIdInUrl(null);
     dispatch({ type: 'reset' });
     setConfirmReset(false);
+    setView('game');
   }, [gameId, dispatch]);
+
+  const handleOpenGame = useCallback(
+    (id: string) => {
+      if (gameId) clearCachedGame(gameId);
+      setGameId(id);
+      setGameIdInUrl(id);
+      dispatch({ type: 'reset' });
+      setView('game');
+    },
+    [gameId, dispatch],
+  );
+
+  if (loading) {
+    return <div className={styles.loadingScreen}>טוען…</div>;
+  }
+
+  // Logged in but no profile row (extremely rare — trigger should populate it).
+  if (user && !profile) {
+    return <CompleteProfile />;
+  }
+
+  if (view === 'auth') {
+    return <AuthScreen onCancel={() => setView('game')} />;
+  }
 
   return (
     <div className={styles.app}>
       <OfflineBanner status={syncStatus} />
 
       <header className={styles.header}>
+        <div className={styles.headerStart}>
+          <UserMenu
+            onOpenHistory={() => {
+              if (!user) {
+                setView('auth');
+                return;
+              }
+              setView('history');
+            }}
+            onOpenAuth={() => setView('auth')}
+          />
+        </div>
         <h1 className={styles.title}>פוקר נייט</h1>
-        {gameId && (
-          <button
-            type="button"
-            className={styles.shareButton}
-            onClick={handleShare}
-            aria-label="שיתוף קישור למשחק"
-          >
-            שיתוף קישור
-          </button>
-        )}
+        <div className={styles.headerEnd}>
+          {gameId && (
+            <button
+              type="button"
+              className={styles.shareButton}
+              onClick={handleShare}
+              aria-label="שיתוף קישור למשחק"
+            >
+              שיתוף
+            </button>
+          )}
+        </div>
       </header>
 
       <main className={styles.main}>
-        {state.phase === 'setup' && (
-          <SetupPhase
-            players={state.players}
-            dispatch={dispatch}
-            onStartGame={handleStartGame}
+        {view === 'history' && user ? (
+          <HistoryView
+            onClose={() => setView('game')}
+            onOpenGame={handleOpenGame}
           />
-        )}
+        ) : (
+          <>
+            {state.phase === 'setup' && (
+              <>
+                {!user ? (
+                  <div className={styles.signedOutPanel}>
+                    <h2 className={styles.signedOutTitle}>
+                      צריך להתחבר כדי ליצור משחק
+                    </h2>
+                    <p className={styles.signedOutBody}>
+                      ההתחברות מאפשרת לשמור היסטוריה ולעקוב אחר רווח/הפסד
+                      לאורך זמן. כדי רק לצפות במשחק של חבר — פתחו את הקישור
+                      ששלח.
+                    </p>
+                    <button
+                      type="button"
+                      className={styles.primaryCta}
+                      onClick={() => setView('auth')}
+                    >
+                      התחברות / הרשמה
+                    </button>
+                  </div>
+                ) : (
+                  <SetupPhase
+                    players={state.players}
+                    dispatch={dispatch}
+                    onStartGame={handleStartGame}
+                  />
+                )}
+              </>
+            )}
 
-        {state.phase === 'playing' && (
-          <PlayingPhase
-            players={state.players}
-            dispatch={dispatch}
-            onGoToSettlement={() => dispatch({ type: 'go-to-settlement' })}
-            onRequestNewGame={() => setConfirmReset(true)}
-          />
-        )}
+            {state.phase === 'playing' && (
+              <PlayingPhase
+                players={state.players}
+                dispatch={dispatch}
+                isHost={isHost}
+                onGoToSettlement={() => dispatch({ type: 'go-to-settlement' })}
+                onRequestNewGame={() => setConfirmReset(true)}
+              />
+            )}
 
-        {state.phase === 'settlement' && (
-          <SettlementPhase
-            players={state.players}
-            onBackToPlaying={() => dispatch({ type: 'back-to-playing' })}
-            onRequestNewGame={() => setConfirmReset(true)}
-          />
+            {state.phase === 'settlement' && (
+              <SettlementPhase
+                players={state.players}
+                isHost={isHost}
+                onBackToPlaying={() => dispatch({ type: 'back-to-playing' })}
+                onRequestNewGame={() => setConfirmReset(true)}
+              />
+            )}
+          </>
         )}
       </main>
 
@@ -137,5 +226,13 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
   );
 }

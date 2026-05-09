@@ -1,8 +1,12 @@
 import type { GameState, Player } from '../types';
-import { generatePlayerId } from '../lib/gameId';
 
 export type Action =
-  | { type: 'add-player'; name: string; initialBuyIn: number }
+  | {
+      type: 'add-player';
+      userId: string;
+      name: string;
+      initialBuyIn: number;
+    }
   | { type: 'remove-player'; id: string }
   | { type: 'add-buy-in'; id: string; amount: number }
   | { type: 'cash-out'; id: string; amount: number }
@@ -17,9 +21,11 @@ export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'add-player': {
       const trimmed = action.name.trim();
-      if (!trimmed) return state;
+      if (!trimmed || !action.userId) return state;
+      // Reject duplicates: a user can only be in a game once.
+      if (state.players.some((p) => p.id === action.userId)) return state;
       const player: Player = {
-        id: generatePlayerId(),
+        id: action.userId,
         name: trimmed,
         buyIns: [Math.max(0, Math.round(action.initialBuyIn))],
         cashedOut: null,

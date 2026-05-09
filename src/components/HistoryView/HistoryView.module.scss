@@ -1,0 +1,222 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.closeButton {
+  @include button-ghost;
+  width: 40px;
+  padding: 0;
+  font-size: $font-size-lg;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: $space-7;
+  color: $text-muted;
+  border: 1px dashed $border-subtle;
+  border-radius: $radius-lg;
+}
+
+.error {
+  background: rgba(255, 94, 94, 0.12);
+  color: $negative;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+}
+
+.statsCard {
+  @include card;
+  display: flex;
+  align-items: stretch;
+  padding: $space-4;
+}
+
+.statBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $text-muted;
+}
+
+.statValue {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.statPositive {
+  color: $positive;
+}
+
+.statNegative {
+  color: $negative;
+}
+
+.statDivider {
+  width: 1px;
+  background: $border-subtle;
+  margin: $space-1 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.opponents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.opponentRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+}
+
+.opponentIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.opponentName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.opponentMeta {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.opponentNet {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $text-muted;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.games {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.gameRow {
+  margin: 0;
+  padding: 0;
+}
+
+.gameButton {
+  @include card;
+  appearance: none;
+  width: 100%;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  transition: border-color $dur-fast $ease-out;
+
+  &:hover {
+    border-color: $accent;
+  }
+}
+
+.gameMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gameDate {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.gameMeta {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.gameNet {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.gameActive {
+  color: $accent;
+  font-size: $font-size-sm;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
