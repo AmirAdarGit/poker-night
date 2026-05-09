@@ -9,7 +9,7 @@ import {
   setGameIdInUrl,
   shareGameLink,
 } from './lib/share';
-import { createGame, syncGamePlayers } from './lib/supabase';
+import { createGame } from './lib/supabase';
 import { clearCachedGame } from './lib/storage';
 import { SetupPhase } from './components/SetupPhase/SetupPhase';
 import { PlayingPhase } from './components/PlayingPhase/PlayingPhase';
@@ -31,8 +31,7 @@ function AppInner() {
     const fromUrl = readGameIdFromUrl();
     return fromUrl && isValidGameId(fromUrl) ? fromUrl : null;
   });
-  const { state, dispatch, syncStatus, lastError, isHost } =
-    useGameSync(gameId);
+  const { state, dispatch, syncStatus, lastError } = useGameSync(gameId);
 
   const [view, setView] = useState<View>('game');
   const [toast, setToast] = useState<string | null>(null);
@@ -67,10 +66,6 @@ function AppInner() {
       showToast(`לא ניתן ליצור משחק: ${result.error}`);
       return;
     }
-    await syncGamePlayers(
-      id,
-      next.players.map((p) => p.id),
-    );
     setGameId(id);
     setGameIdInUrl(id);
     dispatch({ type: 'hydrate', state: next });
@@ -195,7 +190,6 @@ function AppInner() {
               <PlayingPhase
                 players={state.players}
                 dispatch={dispatch}
-                isHost={isHost}
                 onGoToSettlement={() => dispatch({ type: 'go-to-settlement' })}
                 onRequestNewGame={() => setConfirmReset(true)}
               />
@@ -204,7 +198,6 @@ function AppInner() {
             {state.phase === 'settlement' && (
               <SettlementPhase
                 players={state.players}
-                isHost={isHost}
                 onBackToPlaying={() => dispatch({ type: 'back-to-playing' })}
                 onRequestNewGame={() => setConfirmReset(true)}
               />

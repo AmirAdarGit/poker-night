@@ -1,37 +1,41 @@
 import { supabase } from './supabase';
-import type { GameState, Player, Profile } from '../types';
+import type { GameState, Player } from '../types';
 import { getNet, sumBuyIns } from '../types';
 
 export interface GameHistoryEntry {
   gameId: string;
   hostId: string | null;
-  hostName: string | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
   totalPot: number;
   playerCount: number;
-  myNet: number; // 0 if I haven't cashed out yet in this game
+  myNet: number;
   myStillIn: boolean;
   players: Player[];
 }
 
 export interface OpponentSummary {
-  userId: string;
+  // Identity is by name in this model — names are free-text per game.
   displayName: string;
   gamesTogether: number;
-  // My total net across all games where this opponent also played.
+  // My net across the games where this opponent played.
   myNetWithThem: number;
-  // Their total net across the same games.
+  // Their net across the same games.
   theirNet: number;
 }
 
 export interface LifetimeStats {
   gamesPlayed: number;
   totalNet: number;
-  // My net only across games where I cashed out.
   settledGamesPlayed: number;
   settledTotalNet: number;
+}
+
+// Identifies "me" in a game's state.players[] — the player whose ID matches
+// my user UUID (because the host auto-adds themselves with userId = auth uid).
+function findMe(players: Player[], myUserId: string): Player | undefined {
+  return players.find((p) => p.id === myUserId);
 }
 
 export async function fetchMyGames(
@@ -39,45 +43,14 @@ export async function fetchMyGames(
 ): Promise<GameHistoryEntry[]> {
   if (!supabase) return [];
 
-  const { data: links, error: e1 } = await supabase
-    .from('game_players')
-    .select('game_id')
-    .eq('user_id', userId);
-  if (e1 || !links || links.length === 0) return [];
-
-  const gameIds = links.map((r: { game_id: string }) => r.game_id);
-
-  const { data: games, error: e2 } = await supabase
+  const { data, error } = await supabase
     .from('games')
-    .select(
-      'id, host_id, state, completed_at, created_at, updated_at',
-    )
-    .in('id', gameIds)
+    .select('id, host_id, state, completed_at, created_at, updated_at')
+    .eq('host_id', userId)
     .order('updated_at', { ascending: false });
-  if (e2 || !games) return [];
+  if (error || !data) return [];
 
-  // Resolve host display names in one batch.
-  const hostIds = [
-    ...new Set(
-      (games as { host_id: string | null }[])
-        .map((g) => g.host_id)
-        .filter((id): id is string => !!id),
-    ),
-  ];
-  const hostNameMap = new Map<string, string>();
-  if (hostIds.length > 0) {
-    const { data: hostProfiles } = await supabase
-      .from('profiles')
-      .select('id, display_name')
-      .in('id', hostIds);
-    if (hostProfiles) {
-      for (const p of hostProfiles as Profile[]) {
-        hostNameMap.set(p.id, p.display_name);
-      }
-    }
-  }
-
-  return (games as Array<{
+  return (data as Array<{
     id: string;
     host_id: string | null;
     state: GameState;
@@ -85,12 +58,11 @@ export async function fetchMyGames(
     created_at: string;
     updated_at: string;
   }>).map((g) => {
-    const me = g.state.players.find((p) => p.id === userId);
+    const me = findMe(g.state.players, userId);
     const myNet = me ? getNet(me) : 0;
     return {
       gameId: g.id,
       hostId: g.host_id,
-      hostName: g.host_id ? (hostNameMap.get(g.host_id) ?? null) : null,
       createdAt: g.created_at,
       updatedAt: g.updated_at,
       completedAt: g.completed_at,
@@ -122,21 +94,24 @@ export function computeOpponentSummaries(
   const map = new Map<string, OpponentSummary>();
 
   for (const g of games) {
-    const me = g.players.find((p) => p.id === myUserId);
+    const me = findMe(g.players, myUserId);
     if (!me) continue;
     const myNet = getNet(me);
 
     for (const p of g.players) {
       if (p.id === myUserId) continue;
-      const existing = map.get(p.id);
+      // Aggregate by name — different IDs across games are expected since
+      // free-text players get fresh client-side IDs each game.
+      const key = p.name.trim();
+      if (!key) continue;
+      const existing = map.get(key);
       const theirNet = getNet(p);
       if (existing) {
         existing.gamesTogether += 1;
         existing.myNetWithThem += myNet;
         existing.theirNet += theirNet;
       } else {
-        map.set(p.id, {
-          userId: p.id,
+        map.set(key, {
           displayName: p.name,
           gamesTogether: 1,
           myNetWithThem: myNet,

@@ -1,9 +1,8 @@
 -- =============================================================================
--- Poker Night — Supabase schema (v2: auth + history)
+-- Poker Night — Supabase schema (v3: name-based players, link-grants-edit)
 --
 -- Run this once in your Supabase project SQL editor.
--- IMPORTANT: this file WIPES public.games, public.profiles, public.game_players
---            on every run. Schema is idempotent; data is not preserved.
+-- IMPORTANT: this file WIPES public.games and public.profiles on every run.
 -- =============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -24,10 +23,9 @@ create table public.profiles (
 );
 
 create index profiles_display_name_idx on public.profiles (lower(display_name));
-create index profiles_email_idx on public.profiles (lower(email));
 
 -- ----------------------------------------------------------------------------
--- 2. games — adds host_id, name, completed_at
+-- 2. games — host_id for attribution, public read+write (link is the trust)
 -- ----------------------------------------------------------------------------
 create table public.games (
   id text primary key,
@@ -59,21 +57,7 @@ create trigger set_updated_at
   execute function public.tg_set_updated_at();
 
 -- ----------------------------------------------------------------------------
--- 3. game_players — link table for "who played in which game" (history)
--- ----------------------------------------------------------------------------
-create table public.game_players (
-  game_id text references public.games(id) on delete cascade,
-  user_id uuid references auth.users(id) on delete cascade,
-  joined_at timestamptz not null default now(),
-  primary key (game_id, user_id)
-);
-
-create index game_players_user_idx on public.game_players (user_id, joined_at desc);
-
--- ----------------------------------------------------------------------------
--- 4. Auto-create a profile row when a new user signs up.
--- The display_name comes from raw_user_meta_data.display_name (set during
--- signup) or falls back to the OAuth provider's full_name / name / email-prefix.
+-- 3. Auto-create a profile row when a new user signs up.
 -- ----------------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
@@ -104,15 +88,12 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================================
--- 5. Row Level Security
+-- 4. Row Level Security
 -- ============================================================================
 
 -- ---- profiles ----
 alter table public.profiles enable row level security;
 
--- Anyone (incl. anon) can read profiles. We need this so that opponents'
--- display_names render in the history view, and so the player-picker can
--- search registered users by email.
 create policy "profiles are publicly readable"
   on public.profiles for select
   using (true);
@@ -129,62 +110,31 @@ create policy "users can insert their own profile"
 -- ---- games ----
 alter table public.games enable row level security;
 
--- SELECT: anyone with the (unguessable) ID can view a game. The game ID
--- functions as a bearer token, like a Calendly link.
+-- SELECT: anyone with the (unguessable) ID can view a game.
 create policy "games are publicly readable"
   on public.games for select
   using (true);
 
--- INSERT: must be the host you say you are.
+-- INSERT: must be a logged-in user creating a game as themselves.
 create policy "users can create games as themselves"
   on public.games for insert
   with check (auth.uid() = host_id);
 
--- UPDATE: only the host. with check ensures host_id can't be reassigned.
-create policy "host can update own games"
+-- UPDATE: anyone can update. The link is the trust boundary — sharing it
+-- means granting edit permission. host_id is locked so only the original
+-- host can be reassigned/cleared (and only via direct DB access, not RLS).
+create policy "anyone can update games"
   on public.games for update
-  using (auth.uid() = host_id)
-  with check (auth.uid() = host_id);
+  using (true)
+  with check (true);
 
--- DELETE (rare; host can clear their own games)
+-- DELETE: only the host.
 create policy "host can delete own games"
   on public.games for delete
   using (auth.uid() = host_id);
 
--- ---- game_players ----
-alter table public.game_players enable row level security;
-
--- SELECT: a row is visible if you are the player, OR you are the host of the
--- linked game (so the host can see participant lists), OR the game is publicly
--- linked (which it always is, since it has no privacy beyond the ID). For
--- simplicity we just allow public read of the link table — it only contains
--- (game_id, user_id) pairs which together with profiles let history render.
-create policy "game_players are publicly readable"
-  on public.game_players for select
-  using (true);
-
--- INSERT: only the host of the game can add players to it.
-create policy "host can add players to own games"
-  on public.game_players for insert
-  with check (
-    exists (
-      select 1 from public.games g
-      where g.id = game_id and g.host_id = auth.uid()
-    )
-  );
-
--- DELETE: host can remove players (e.g., remove a player mid-game).
-create policy "host can remove players from own games"
-  on public.game_players for delete
-  using (
-    exists (
-      select 1 from public.games g
-      where g.id = game_id and g.host_id = auth.uid()
-    )
-  );
-
 -- ============================================================================
--- 6. Realtime
+-- 5. Realtime
 -- ============================================================================
 
 do $$
@@ -194,7 +144,6 @@ begin
   end if;
 end $$;
 
--- Add games to realtime (re-add is a no-op if already present).
 do $$
 begin
   begin

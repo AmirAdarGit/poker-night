@@ -98,7 +98,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
               <h3 className={styles.sectionTitle}>מול חברים</h3>
               <ul className={styles.opponents}>
                 {opponents.map((o) => (
-                  <li key={o.userId} className={styles.opponentRow}>
+                  <li key={o.displayName} className={styles.opponentRow}>
                     <div className={styles.opponentIdentity}>
                       <span className={styles.opponentName}>
                         {o.displayName}
@@ -145,7 +145,6 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                       </span>
                       <span className={styles.gameMeta}>
                         {g.playerCount} שחקנים · קופה {g.totalPot} ₪
-                        {g.hostName && ` · מארח: ${g.hostName}`}
                       </span>
                     </div>
                     <span

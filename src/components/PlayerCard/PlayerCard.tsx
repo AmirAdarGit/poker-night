@@ -7,10 +7,9 @@ import type { Action } from '../../reducer/gameReducer';
 interface Props {
   player: Player;
   dispatch: (a: Action) => void;
-  canEdit: boolean;
 }
 
-export function PlayerCard({ player, dispatch, canEdit }: Props) {
+export function PlayerCard({ player, dispatch }: Props) {
   const [rebuyAmount, setRebuyAmount] = useState<string>(
     String(DEFAULT_BUY_IN),
   );
@@ -67,17 +66,15 @@ export function PlayerCard({ player, dispatch, canEdit }: Props) {
           <span className={styles.cashedOutLabel}>
             יצא עם {player.cashedOut} ₪
           </span>
-          {canEdit && (
-            <button
-              type="button"
-              className={styles.undoButton}
-              onClick={() => dispatch({ type: 'undo-cash-out', id: player.id })}
-            >
-              בטל יציאה
-            </button>
-          )}
+          <button
+            type="button"
+            className={styles.undoButton}
+            onClick={() => dispatch({ type: 'undo-cash-out', id: player.id })}
+          >
+            בטל יציאה
+          </button>
         </div>
-      ) : canEdit ? (
+      ) : (
         <div className={styles.actions}>
           <div className={styles.actionGroup}>
             <input
@@ -142,22 +139,16 @@ export function PlayerCard({ player, dispatch, canEdit }: Props) {
             </button>
           )}
         </div>
-      ) : (
-        <div className={styles.viewerNote}>
-          ממתין שהמארח יעדכן את הסטטוס
-        </div>
       )}
 
-      {canEdit && (
-        <button
-          type="button"
-          className={styles.removeLink}
-          onClick={() => dispatch({ type: 'remove-player', id: player.id })}
-          aria-label={`הסר את ${player.name} מהמשחק`}
-        >
-          הסר שחקן
-        </button>
-      )}
+      <button
+        type="button"
+        className={styles.removeLink}
+        onClick={() => dispatch({ type: 'remove-player', id: player.id })}
+        aria-label={`הסר את ${player.name} מהמשחק`}
+      >
+        הסר שחקן
+      </button>
     </article>
   );
 }

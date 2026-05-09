@@ -26,89 +26,25 @@
   color: $text-muted;
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  gap: $space-3;
+.form {
+  display: grid;
+  grid-template-columns: 1fr 100px auto;
+  gap: $space-2;
+  align-items: stretch;
 }
 
-.amountLabel {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-  font-size: $font-size-sm;
-  color: $text-secondary;
-  width: 100%;
+.nameInput {
+  @include input-base;
 }
 
 .amountInput {
   @include input-base;
-  flex: 1;
-  max-width: 120px;
   text-align: center;
 }
 
-.recent {
-  display: flex;
-  flex-direction: column;
-  gap: $space-2;
-}
-
-.recentLabel {
-  font-size: $font-size-xs;
-  color: $text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.recentChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-2;
-}
-
-.chip {
-  appearance: none;
-  background: $bg-surface-elevated;
-  border: 1px solid $border-strong;
-  color: $text-primary;
-  padding: $space-2 $space-3;
-  border-radius: $radius-pill;
-  font: inherit;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  min-height: 36px;
-  transition: background $dur-fast $ease-out, border-color $dur-fast $ease-out;
-
-  &:hover {
-    background: $bg-surface-raised;
-    border-color: $accent;
-  }
-}
-
-.emailForm {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: $space-2;
-}
-
-.emailInput {
-  @include input-base;
-}
-
-.lookupButton {
-  @include button-secondary;
+.addButton {
+  @include button-primary;
   padding-inline: $space-5;
-}
-
-.lookupError {
-  margin-top: -$space-3;
-  font-size: $font-size-sm;
-  color: $negative;
-  background: rgba(255, 94, 94, 0.1);
-  padding: $space-2 $space-3;
-  border-radius: $radius-md;
 }
 
 .list {

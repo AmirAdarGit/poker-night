@@ -1,13 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './SetupPhase.module.scss';
-import type { Player, Profile } from '../../types';
+import type { Player } from '../../types';
 import { DEFAULT_BUY_IN } from '../../types';
 import type { Action } from '../../reducer/gameReducer';
 import { useAuth } from '../../contexts/AuthContext';
-import {
-  fetchRecentCoPlayers,
-  lookupProfileByEmail,
-} from '../../lib/players';
 
 interface Props {
   players: Player[];
@@ -17,13 +13,10 @@ interface Props {
 
 export function SetupPhase({ players, dispatch, onStartGame }: Props) {
   const { user, profile } = useAuth();
-  const [recent, setRecent] = useState<Profile[]>([]);
-  const [email, setEmail] = useState('');
-  const [buyIn, setBuyIn] = useState(String(DEFAULT_BUY_IN));
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [lookingUp, setLookingUp] = useState(false);
+  const [name, setName] = useState('');
+  const [buyIn, setBuyIn] = useState<string>(String(DEFAULT_BUY_IN));
 
-  // Auto-add the host as the first player.
+  // Auto-add the host as the first player using their display name.
   useEffect(() => {
     if (!user || !profile) return;
     if (players.some((p) => p.id === user.id)) return;
@@ -35,117 +28,64 @@ export function SetupPhase({ players, dispatch, onStartGame }: Props) {
     });
   }, [user, profile, players, dispatch]);
 
-  // Load recently-played-with users.
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    fetchRecentCoPlayers(user.id).then((rows) => {
-      if (!cancelled) setRecent(rows);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  const presentIds = useMemo(
-    () => new Set(players.map((p) => p.id)),
-    [players],
-  );
-  const availableRecent = recent.filter((p) => !presentIds.has(p.id));
-
-  const addProfile = (p: Profile) => {
-    const amount = Number(buyIn) || DEFAULT_BUY_IN;
-    dispatch({
-      type: 'add-player',
-      userId: p.id,
-      name: p.display_name,
-      initialBuyIn: amount,
-    });
-  };
-
-  const handleEmailLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLookupError(null);
-    if (!email.trim()) return;
-    setLookingUp(true);
-    const found = await lookupProfileByEmail(email);
-    setLookingUp(false);
-    if (!found) {
-      setLookupError(
-        `לא נמצא משתמש עם המייל הזה. בקשו מהשחקן להירשם תחילה.`,
-      );
-      return;
-    }
-    if (presentIds.has(found.id)) {
-      setLookupError('השחקן כבר במשחק');
-      return;
-    }
-    addProfile(found);
-    setEmail('');
-  };
-
+  const canAdd = name.trim().length > 0;
   const canStart = players.length >= 2;
+
+  const handleAdd = () => {
+    if (!canAdd) return;
+    const amount = Number(buyIn) || DEFAULT_BUY_IN;
+    dispatch({ type: 'add-player', name, initialBuyIn: amount });
+    setName('');
+    setBuyIn(String(DEFAULT_BUY_IN));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
 
   return (
     <section className={styles.setup}>
       <div className={styles.intro}>
         <h2 className={styles.heading}>מי משחק?</h2>
         <p className={styles.subheading}>
-          הוסיפו שחקנים רשומים. ברירת המחדל לכניסה היא {DEFAULT_BUY_IN} ₪.
+          הוסיפו את שמות השחקנים. ברירת המחדל לכניסה היא {DEFAULT_BUY_IN} ₪.
         </p>
       </div>
 
-      <div className={styles.controls}>
-        <label className={styles.amountLabel}>
-          סכום כניסה ברירת מחדל
-          <input
-            type="number"
-            inputMode="numeric"
-            className={styles.amountInput}
-            value={buyIn}
-            onChange={(e) => setBuyIn(e.target.value)}
-            min={0}
-            step={10}
-          />
-        </label>
-      </div>
-
-      {availableRecent.length > 0 && (
-        <div className={styles.recent}>
-          <div className={styles.recentLabel}>שחקנים שאיתם שיחקת</div>
-          <div className={styles.recentChips}>
-            {availableRecent.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={styles.chip}
-                onClick={() => addProfile(p)}
-              >
-                + {p.display_name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <form className={styles.emailForm} onSubmit={handleEmailLookup}>
+      <div className={styles.form}>
         <input
-          type="email"
-          className={styles.emailInput}
-          placeholder="הוסף שחקן לפי אימייל"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="off"
+          type="text"
+          inputMode="text"
+          className={styles.nameInput}
+          placeholder="שם השחקן"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+        <input
+          type="number"
+          inputMode="numeric"
+          className={styles.amountInput}
+          value={buyIn}
+          onChange={(e) => setBuyIn(e.target.value)}
+          onKeyDown={handleKeyDown}
+          min={0}
+          step={10}
+          aria-label="סכום כניסה"
         />
         <button
-          type="submit"
-          className={styles.lookupButton}
-          disabled={!email.trim() || lookingUp}
+          type="button"
+          className={styles.addButton}
+          onClick={handleAdd}
+          disabled={!canAdd}
         >
-          {lookingUp ? '…' : 'הוסף'}
+          הוסף
         </button>
-      </form>
-      {lookupError && <div className={styles.lookupError}>{lookupError}</div>}
+      </div>
 
       {players.length > 0 ? (
         <ul className={styles.list}>

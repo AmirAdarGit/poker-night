@@ -1,11 +1,14 @@
 import type { GameState, Player } from '../types';
+import { generatePlayerId } from '../lib/gameId';
 
 export type Action =
   | {
       type: 'add-player';
-      userId: string;
       name: string;
       initialBuyIn: number;
+      // Optional — used when the host auto-adds themselves so we know to
+      // map this player back to their account for history aggregation.
+      userId?: string;
     }
   | { type: 'remove-player'; id: string }
   | { type: 'add-buy-in'; id: string; amount: number }
@@ -21,11 +24,16 @@ export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'add-player': {
       const trimmed = action.name.trim();
-      if (!trimmed || !action.userId) return state;
-      // Reject duplicates: a user can only be in a game once.
-      if (state.players.some((p) => p.id === action.userId)) return state;
+      if (!trimmed) return state;
+      // If a userId is provided (host auto-add), use it as the player ID and
+      // reject duplicates by user. Otherwise generate a fresh ID — duplicate
+      // names are allowed because two friends might share a first name.
+      const id = action.userId ?? generatePlayerId();
+      if (action.userId && state.players.some((p) => p.id === id)) {
+        return state;
+      }
       const player: Player = {
-        id: action.userId,
+        id,
         name: trimmed,
         buyIns: [Math.max(0, Math.round(action.initialBuyIn))],
         cashedOut: null,
