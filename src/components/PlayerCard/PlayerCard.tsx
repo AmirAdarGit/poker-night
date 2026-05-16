@@ -27,10 +27,22 @@ export function PlayerCard({ player, dispatch }: Props) {
     setRebuyAmount(String(DEFAULT_BUY_IN));
   };
 
+  // An empty field is NOT a 0 cash-out: Number('') is 0, which would wrongly
+  // record the player as busting out and show a negative balance. Require an
+  // actual typed value — to cash out at zero the user types "0" explicitly.
+  const trimmedCashOut = cashOutAmount.trim();
+  const cashOutValid =
+    trimmedCashOut !== '' &&
+    Number.isFinite(Number(trimmedCashOut)) &&
+    Number(trimmedCashOut) >= 0;
+
   const handleCashOut = () => {
-    const amount = Number(cashOutAmount);
-    if (!Number.isFinite(amount) || amount < 0) return;
-    dispatch({ type: 'cash-out', id: player.id, amount });
+    if (!cashOutValid) return;
+    dispatch({
+      type: 'cash-out',
+      id: player.id,
+      amount: Number(trimmedCashOut),
+    });
     setCashOutAmount('');
     setShowCashOut(false);
   };
@@ -76,27 +88,10 @@ export function PlayerCard({ player, dispatch }: Props) {
         </div>
       ) : (
         <div className={styles.actions}>
-          <div className={styles.actionGroup}>
-            <input
-              type="number"
-              inputMode="numeric"
-              className={styles.amountInput}
-              value={rebuyAmount}
-              onChange={(e) => setRebuyAmount(e.target.value)}
-              min={0}
-              step={10}
-              aria-label="סכום כניסה נוספת"
-            />
-            <button
-              type="button"
-              className={styles.rebuyButton}
-              onClick={handleRebuy}
-            >
-              + כניסה
-            </button>
-          </div>
-
           {showCashOut ? (
+            // Only the cash-out field is shown here — keeping the rebuy input
+            // visible at the same time made it easy to type the cash-out
+            // amount into the wrong box and confirm an empty (0) cash-out.
             <div className={styles.actionGroup}>
               <input
                 type="number"
@@ -104,7 +99,7 @@ export function PlayerCard({ player, dispatch }: Props) {
                 className={styles.amountInput}
                 value={cashOutAmount}
                 onChange={(e) => setCashOutAmount(e.target.value)}
-                placeholder="0"
+                placeholder="כמה יצא?"
                 min={0}
                 step={10}
                 autoFocus
@@ -114,6 +109,7 @@ export function PlayerCard({ player, dispatch }: Props) {
                 type="button"
                 className={styles.confirmButton}
                 onClick={handleCashOut}
+                disabled={!cashOutValid}
               >
                 אשר
               </button>
@@ -130,13 +126,34 @@ export function PlayerCard({ player, dispatch }: Props) {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              className={styles.cashOutButton}
-              onClick={() => setShowCashOut(true)}
-            >
-              יציאה
-            </button>
+            <>
+              <div className={styles.actionGroup}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className={styles.amountInput}
+                  value={rebuyAmount}
+                  onChange={(e) => setRebuyAmount(e.target.value)}
+                  min={0}
+                  step={10}
+                  aria-label="סכום כניסה נוספת"
+                />
+                <button
+                  type="button"
+                  className={styles.rebuyButton}
+                  onClick={handleRebuy}
+                >
+                  + כניסה
+                </button>
+              </div>
+              <button
+                type="button"
+                className={styles.cashOutButton}
+                onClick={() => setShowCashOut(true)}
+              >
+                יציאה
+              </button>
+            </>
           )}
         </div>
       )}
