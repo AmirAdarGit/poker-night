@@ -39,7 +39,7 @@ describe('calculateSettlements', () => {
       mkPlayer('B', [50], 20),
     ];
     expect(calculateSettlements(players)).toEqual([
-      { from: 'B', to: 'A', amount: 30 },
+      { from: 'B', to: 'A', fromId: 'b', toId: 'a', amount: 30 },
     ]);
   });
 
@@ -73,7 +73,9 @@ describe('calculateSettlements', () => {
       mkPlayer('C', [50], null), // still in
     ];
     const transfers = calculateSettlements(players);
-    expect(transfers).toEqual([{ from: 'B', to: 'A', amount: 50 }]);
+    expect(transfers).toEqual([
+      { from: 'B', to: 'A', fromId: 'b', toId: 'a', amount: 50 },
+    ]);
   });
 
   it('handles three-way exact split', () => {
@@ -95,7 +97,7 @@ describe('calculateSettlements', () => {
       mkPlayer('B', [50], 0), // -50
     ];
     expect(calculateSettlements(players)).toEqual([
-      { from: 'B', to: 'A', amount: 50 },
+      { from: 'B', to: 'A', fromId: 'b', toId: 'a', amount: 50 },
     ]);
   });
 

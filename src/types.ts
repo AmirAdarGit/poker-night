@@ -7,6 +7,9 @@ export interface Player {
   buyIns: number[];
   cashedOut: number | null;
   joinedAt: number;
+  // Optional Israeli mobile number. Entered on the settlement screen and used
+  // for WhatsApp reminders and Bit payments — never required to play.
+  phone?: string;
 }
 
 export interface Profile {
@@ -26,6 +29,9 @@ export interface GameState {
 export interface Settlement {
   from: string;
   to: string;
+  // Player IDs behind the names — names can collide, IDs map back to a player.
+  fromId: string;
+  toId: string;
   amount: number;
 }
 

@@ -30,6 +30,11 @@ $loss-600: #d94646;
 
 $warn-500: #f5a623;
 
+$whatsapp-500: #25d366;
+$whatsapp-600: #1faa52;
+$bit-500: #00c8b3;
+$bit-600: #00a896;
+
 $shadow-rgba: rgba(0, 0, 0, 0.45);
 
 // ---------- Semantic tokens ----------
@@ -56,6 +61,10 @@ $positive-hover: $win-600;
 $negative: $loss-500;
 $negative-hover: $loss-600;
 $warning: $warn-500;
+$brand-whatsapp: $whatsapp-500;
+$brand-whatsapp-hover: $whatsapp-600;
+$brand-bit: $bit-500;
+$brand-bit-hover: $bit-600;
 
 // ---------- Spacing ----------
 $space-1: 4px;

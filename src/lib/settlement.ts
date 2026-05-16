@@ -33,6 +33,8 @@ export function calculateSettlements(players: Player[]): Settlement[] {
       transfers.push({
         from: debtor.name,
         to: creditor.name,
+        fromId: debtor.id,
+        toId: creditor.id,
         amount,
       });
       debtor.net += amount;

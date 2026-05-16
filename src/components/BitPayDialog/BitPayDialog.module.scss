@@ -1,0 +1,145 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: $z-modal;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+  animation: fadeIn $dur-base $ease-out;
+}
+
+.dialog {
+  background: $bg-surface-raised;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  padding: $space-5;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  animation: scaleIn $dur-base $ease-out;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.line {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.dataRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  background: $bg-surface;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+}
+
+.amount {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $accent;
+  font-variant-numeric: tabular-nums;
+}
+
+.phoneValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.copyButton {
+  @include button-secondary;
+  padding: $space-2 $space-3;
+  min-height: 36px;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.fieldLabel {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.input {
+  @include input-base;
+  text-align: start;
+}
+
+.note {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $text-muted;
+  line-height: 1.5;
+}
+
+.openButton {
+  @include button-base;
+  background: $brand-bit;
+  color: $felt-900;
+
+  &:not(:disabled):hover {
+    background: $brand-bit-hover;
+  }
+}
+
+.installLink {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $accent;
+  text-decoration: none;
+  padding: $space-1 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.closeButton {
+  @include button-ghost;
+  font-size: $font-size-sm;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

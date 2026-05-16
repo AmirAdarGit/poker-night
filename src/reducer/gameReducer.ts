@@ -11,6 +11,7 @@ export type Action =
       userId?: string;
     }
   | { type: 'remove-player'; id: string }
+  | { type: 'set-player-phone'; id: string; phone: string }
   | { type: 'add-buy-in'; id: string; amount: number }
   | { type: 'cash-out'; id: string; amount: number }
   | { type: 'undo-cash-out'; id: string }
@@ -46,6 +47,16 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         players: state.players.filter((p) => p.id !== action.id),
+      };
+    }
+
+    case 'set-player-phone': {
+      const phone = action.phone.trim();
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.id === action.id ? { ...p, phone: phone || undefined } : p,
+        ),
       };
     }
 

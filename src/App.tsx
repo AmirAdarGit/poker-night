@@ -198,6 +198,7 @@ function AppInner() {
             {state.phase === 'settlement' && (
               <SettlementPhase
                 players={state.players}
+                dispatch={dispatch}
                 onBackToPlaying={() => dispatch({ type: 'back-to-playing' })}
                 onRequestNewGame={() => setConfirmReset(true)}
               />
