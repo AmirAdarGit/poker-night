@@ -24,19 +24,27 @@ create unique index if not exists roster_players_name_idx
 -- ----------------------------------------------------------------------------
 -- 2. Seed the initial roster. on conflict do nothing keeps re-runs safe and
 --    lets you append names later by editing this list.
+--
+--    Names are base64-encoded so the SQL stays pure ASCII — pasting Hebrew
+--    string literals into the Supabase SQL editor lets its RTL/bidi rendering
+--    reorder commas and parens and break the parse. Decoded back to UTF-8 here.
+--      ('אמיר אדר'),('רז'),('גל ששון'),('איתי דוד'),('ירדן'),
+--      ('זולא'),('עמית'),('איתמר'),('בן'),('עמרי')
 -- ----------------------------------------------------------------------------
 insert into public.roster_players (name)
-values
-  ('אמיר אדר'),
-  ('רז'),
-  ('גל ששון'),
-  ('איתי דוד'),
-  ('ירדן'),
-  ('זולא'),
-  ('עמית'),
-  ('איתמר'),
-  ('בן'),
-  ('עמרי')
+select convert_from(decode(v, 'base64'), 'utf8')
+from (values
+  ('15DXnteZ16gg15DXk9eo'),
+  ('16jXlg=='),
+  ('15LXnCDXqdep15XXnw=='),
+  ('15DXmdeq15kg15PXldeT'),
+  ('15nXqNeT158='),
+  ('15bXldec15A='),
+  ('16LXnteZ16o='),
+  ('15DXmdeq157XqA=='),
+  ('15HXnw=='),
+  ('16LXnteo15k=')
+) as t(v)
 on conflict (lower(btrim(name))) do nothing;
 
 -- ----------------------------------------------------------------------------

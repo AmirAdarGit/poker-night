@@ -146,18 +146,24 @@ create table public.roster_players (
 create unique index roster_players_name_idx
   on public.roster_players (lower(btrim(name)));
 
+-- Names base64-encoded so the SQL stays pure ASCII (the Supabase SQL editor's
+-- RTL rendering scrambles inline Hebrew literals). Decoded to UTF-8 on insert.
+--   ('אמיר אדר'),('רז'),('גל ששון'),('איתי דוד'),('ירדן'),
+--   ('זולא'),('עמית'),('איתמר'),('בן'),('עמרי')
 insert into public.roster_players (name)
-values
-  ('אמיר אדר'),
-  ('רז'),
-  ('גל ששון'),
-  ('איתי דוד'),
-  ('ירדן'),
-  ('זולא'),
-  ('עמית'),
-  ('איתמר'),
-  ('בן'),
-  ('עמרי')
+select convert_from(decode(v, 'base64'), 'utf8')
+from (values
+  ('15DXnteZ16gg15DXk9eo'),
+  ('16jXlg=='),
+  ('15LXnCDXqdep15XXnw=='),
+  ('15DXmdeq15kg15PXldeT'),
+  ('15nXqNeT158='),
+  ('15bXldec15A='),
+  ('16LXnteZ16o='),
+  ('15DXmdeq157XqA=='),
+  ('15HXnw=='),
+  ('16LXnteo15k=')
+) as t(v)
 on conflict (lower(btrim(name))) do nothing;
 
 alter table public.roster_players enable row level security;
