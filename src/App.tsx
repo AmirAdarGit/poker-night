@@ -31,7 +31,8 @@ function AppInner() {
     const fromUrl = readGameIdFromUrl();
     return fromUrl && isValidGameId(fromUrl) ? fromUrl : null;
   });
-  const { state, dispatch, syncStatus, lastError } = useGameSync(gameId);
+  const { state, dispatch, syncStatus, lastError, completedAt, closeGame, reopenGame } =
+    useGameSync(gameId);
 
   const [view, setView] = useState<View>('game');
   const [toast, setToast] = useState<string | null>(null);
@@ -82,6 +83,16 @@ function AppInner() {
     if (result.kind === 'copied') showToast('הקישור הועתק');
     else if (result.kind === 'failed') showToast('שיתוף נכשל');
   }, [gameId, showToast]);
+
+  const handleCloseGame = useCallback(async () => {
+    await closeGame();
+    showToast('המשחק נסגר ✓');
+  }, [closeGame, showToast]);
+
+  const handleReopenGame = useCallback(async () => {
+    await reopenGame();
+    showToast('המשחק נפתח מחדש');
+  }, [reopenGame, showToast]);
 
   const handleNewGame = useCallback(() => {
     if (gameId) clearCachedGame(gameId);
@@ -156,6 +167,19 @@ function AppInner() {
           />
         ) : (
           <>
+            {gameId && completedAt && (
+              <div className={styles.closedBanner}>
+                <span>המשחק סגור. אפשר לצפות, או לפתוח מחדש כדי לערוך.</span>
+                <button
+                  type="button"
+                  className={styles.reopenButton}
+                  onClick={handleReopenGame}
+                >
+                  פתח מחדש
+                </button>
+              </div>
+            )}
+
             {state.phase === 'setup' && (
               <>
                 {!user ? (
@@ -191,6 +215,7 @@ function AppInner() {
                 players={state.players}
                 dispatch={dispatch}
                 onGoToSettlement={() => dispatch({ type: 'go-to-settlement' })}
+                onCloseGame={handleCloseGame}
                 onRequestNewGame={() => setConfirmReset(true)}
               />
             )}
@@ -200,6 +225,7 @@ function AppInner() {
                 players={state.players}
                 dispatch={dispatch}
                 onBackToPlaying={() => dispatch({ type: 'back-to-playing' })}
+                onCloseGame={handleCloseGame}
                 onRequestNewGame={() => setConfirmReset(true)}
               />
             )}

@@ -26,24 +26,82 @@
   color: $text-muted;
 }
 
-.form {
-  display: grid;
-  grid-template-columns: 1fr 100px auto;
-  gap: $space-2;
-  align-items: stretch;
+.defaultRow {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  @include card;
 }
 
-.nameInput {
-  @include input-base;
+.defaultLabel {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $text-secondary;
 }
 
-.amountInput {
+.defaultInput {
   @include input-base;
+  width: 90px;
   text-align: center;
 }
 
-.addButton {
-  @include button-primary;
+.currency {
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.chip {
+  @include button-base;
+  min-height: 40px;
+  padding: $space-2 $space-4;
+  border-radius: $radius-pill;
+  background: $bg-surface-raised;
+  color: $text-secondary;
+  border-color: $border-subtle;
+  font-weight: $font-weight-medium;
+
+  &:not(:disabled):hover {
+    border-color: $border-strong;
+  }
+}
+
+.chipOn {
+  background: $accent;
+  color: $text-on-accent;
+  border-color: $accent;
+  font-weight: $font-weight-semibold;
+
+  &:not(:disabled):hover {
+    background: $accent-hover;
+    border-color: $accent-hover;
+  }
+}
+
+.youBadge {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  opacity: 0.85;
+}
+
+.addNew {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-2;
+}
+
+.addNewInput {
+  @include input-base;
+}
+
+.addNewButton {
+  @include button-secondary;
   padding-inline: $space-5;
 }
 
@@ -72,24 +130,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.buyInEdit {
   display: flex;
   align-items: center;
-  gap: $space-2;
+  gap: $space-1;
 }
 
-.youBadge {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $accent;
-  border: 1px solid $accent;
-  border-radius: $radius-pill;
-  padding: 2px $space-2;
-}
-
-.playerBuyIn {
-  font-size: $font-size-sm;
-  color: $text-muted;
-  font-variant-numeric: tabular-nums;
+.buyInInput {
+  @include input-base;
+  width: 80px;
+  text-align: center;
+  padding-inline: $space-2;
 }
 
 .removeButton {
@@ -113,11 +166,7 @@
   bottom: 0;
   margin-top: $space-3;
   padding: $space-3;
-  background: linear-gradient(
-    to top,
-    $bg-app 60%,
-    transparent
-  );
+  background: linear-gradient(to top, $bg-app 60%, transparent);
   display: flex;
   flex-direction: column;
   gap: $space-3;

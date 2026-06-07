@@ -1,8 +1,14 @@
 export interface Player {
-  // Equals auth.users.id (uuid). Players are always registered users.
+  // Unique within a single game. For roster players this equals rosterId, so a
+  // given friend can only be added once per game. Free-text/legacy players get
+  // a generated id instead.
   id: string;
-  // Snapshotted from profiles.display_name when the player was added,
-  // so renaming yourself later doesn't rewrite past games.
+  // Stable cross-game identity — references roster_players.id. Analytics
+  // aggregate by this so renaming a player never splits their history. Absent
+  // on legacy/free-text players (fall back to id + name there).
+  rosterId?: string;
+  // Snapshotted name when the player was added, so renaming them later
+  // doesn't rewrite past games.
   name: string;
   buyIns: number[];
   cashedOut: number | null;
@@ -39,6 +45,12 @@ export const DEFAULT_BUY_IN = 50;
 
 export function createEmptyState(): GameState {
   return { phase: 'setup', players: [] };
+}
+
+// Stable identity used to aggregate a player across games. Roster players key
+// by rosterId; legacy free-text players fall back to their per-game id.
+export function playerKey(p: Player): string {
+  return p.rosterId ?? p.id;
 }
 
 export function sumBuyIns(p: Player): number {

@@ -3,6 +3,7 @@ import { gameReducer, type Action } from '../reducer/gameReducer';
 import {
   fetchGame,
   isSupabaseConfigured,
+  setGameCompleted,
   supabase,
   updateGameState,
 } from '../lib/supabase';
@@ -23,6 +24,12 @@ export interface GameSync {
   syncStatus: SyncStatus;
   lastError: string | null;
   hostId: string | null;
+  // ISO timestamp when the game was closed, or null while it's still active.
+  completedAt: string | null;
+  // Close the game for everyone (host or any shared player may call it).
+  closeGame: () => Promise<void>;
+  // Re-open a closed game so it can be edited / returned to active.
+  reopenGame: () => Promise<void>;
 }
 
 export function useGameSync(gameId: string | null): GameSync {
@@ -35,6 +42,7 @@ export function useGameSync(gameId: string | null): GameSync {
   );
   const [lastError, setLastError] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
+  const [completedAt, setCompletedAt] = useState<string | null>(null);
   const online = useOnlineStatus();
 
   const stateRef = useRef(state);
@@ -54,6 +62,7 @@ export function useGameSync(gameId: string | null): GameSync {
     if (!gameId) {
       setSyncStatus('local');
       setHostId(null);
+      setCompletedAt(null);
       return;
     }
     if (!isSupabaseConfigured || !supabase) {
@@ -70,6 +79,7 @@ export function useGameSync(gameId: string | null): GameSync {
         if (cancelled || !row) return;
         dispatch({ type: 'hydrate', state: row.state });
         setHostId(row.host_id);
+        setCompletedAt(row.completed_at);
         lastPushedRef.current = JSON.stringify(row.state);
         if (online) setSyncStatus('live');
       })
@@ -93,10 +103,16 @@ export function useGameSync(gameId: string | null): GameSync {
         },
         (payload) => {
           const row = (payload.new ?? payload.old) as
-            | { state?: GameState; host_id?: string | null }
+            | {
+                state?: GameState;
+                host_id?: string | null;
+                completed_at?: string | null;
+              }
             | undefined;
           if (!row) return;
           if (row.host_id !== undefined) setHostId(row.host_id ?? null);
+          if (row.completed_at !== undefined)
+            setCompletedAt(row.completed_at ?? null);
           const remote = row.state;
           if (!remote) return;
           const remoteJson = JSON.stringify(remote);
@@ -151,6 +167,20 @@ export function useGameSync(gameId: string | null): GameSync {
     }
   }, [online, gameId, syncStatus, pushState]);
 
+  const setCompleted = useCallback(
+    async (completed: boolean) => {
+      if (!gameId) return;
+      // Optimistic — realtime will confirm and re-broadcast to other devices.
+      setCompletedAt(completed ? new Date().toISOString() : null);
+      const result = await setGameCompleted(gameId, completed);
+      if (!result.ok) setLastError(result.error);
+    },
+    [gameId],
+  );
+
+  const closeGame = useCallback(() => setCompleted(true), [setCompleted]);
+  const reopenGame = useCallback(() => setCompleted(false), [setCompleted]);
+
   const wrappedDispatch = useCallback(
     (action: Action) => {
       const before = stateRef.current;
@@ -177,5 +207,8 @@ export function useGameSync(gameId: string | null): GameSync {
     syncStatus,
     lastError,
     hostId,
+    completedAt,
+    closeGame,
+    reopenGame,
   };
 }

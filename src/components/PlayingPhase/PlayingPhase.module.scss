@@ -73,10 +73,51 @@
 }
 
 .addForm {
-  display: grid;
-  grid-template-columns: 1fr 100px auto auto;
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-4;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
   gap: $space-2;
-  align-items: stretch;
+}
+
+.addLabel {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+}
+
+.currency {
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.chip {
+  @include button-base;
+  min-height: 40px;
+  padding: $space-2 $space-4;
+  border-radius: $radius-pill;
+  background: $bg-surface-elevated;
+  color: $text-primary;
+  border-color: $border-strong;
+  font-weight: $font-weight-medium;
+}
+
+.addNew {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-2;
 }
 
 .nameInput {
@@ -85,11 +126,13 @@
 
 .amountInput {
   @include input-base;
+  width: 100px;
   text-align: center;
 }
 
 .confirmAdd {
-  @include button-primary;
+  @include button-secondary;
+  padding-inline: $space-5;
 }
 
 .cancelAdd {
@@ -119,7 +162,19 @@
   font-size: $font-size-lg;
 }
 
+.footerRow {
+  display: flex;
+  gap: $space-2;
+}
+
+.closeButton {
+  @include button-secondary;
+  flex: 1;
+  font-size: $font-size-sm;
+}
+
 .newGameButton {
   @include button-ghost;
+  flex: 1;
   font-size: $font-size-sm;
 }

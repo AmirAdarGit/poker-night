@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import styles from './HistoryView.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  computeLifetimeStats,
-  computeOpponentSummaries,
-  fetchMyGames,
+  computeLeaderboard,
+  fetchAllGames,
   type GameHistoryEntry,
 } from '../../lib/history';
 
@@ -14,14 +13,13 @@ interface Props {
 }
 
 export function HistoryView({ onClose, onOpenGame }: Props) {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
     let cancelled = false;
-    fetchMyGames(user.id)
+    fetchAllGames()
       .then((rows) => {
         if (!cancelled) setGames(rows);
       })
@@ -31,15 +29,24 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, []);
 
-  const lifetime = useMemo(
-    () => (games ? computeLifetimeStats(games) : null),
+  const leaderboard = useMemo(
+    () => (games ? computeLeaderboard(games) : []),
     [games],
   );
-  const opponents = useMemo(
-    () => (games && user ? computeOpponentSummaries(games, user.id) : []),
-    [games, user],
+  const active = useMemo(
+    () => (games ? games.filter((g) => g.isActive) : []),
+    [games],
+  );
+  const finished = useMemo(
+    () => (games ? games.filter((g) => !g.isActive) : []),
+    [games],
+  );
+  // Largest absolute net on the board — scales the bar widths.
+  const maxAbsNet = useMemo(
+    () => leaderboard.reduce((m, e) => Math.max(m, Math.abs(e.totalNet)), 1),
+    [leaderboard],
   );
 
   return (
@@ -53,119 +60,116 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
         >
           ←
         </button>
-        <h2 className={styles.title}>ההיסטוריה שלך</h2>
+        <h2 className={styles.title}>היסטוריה וטבלת מובילים</h2>
       </header>
 
       {error && <div className={styles.error}>שגיאה: {error}</div>}
-
       {!games && !error && <div className={styles.loading}>טוען…</div>}
 
       {games && games.length === 0 && (
         <div className={styles.empty}>
-          עדיין לא שיחקת אף משחק. צור משחק חדש כדי להתחיל לבנות את ההיסטוריה.
+          עדיין אין משחקים. צרו משחק חדש כדי להתחיל לבנות את ההיסטוריה.
         </div>
       )}
 
-      {games && lifetime && games.length > 0 && (
-        <>
-          <div className={styles.statsCard}>
-            <div className={styles.statBlock}>
-              <span className={styles.statLabel}>סה״כ רווח/הפסד</span>
-              <span
-                className={`${styles.statValue} ${
-                  lifetime.settledTotalNet >= 0
-                    ? styles.statPositive
-                    : styles.statNegative
-                }`}
-              >
-                {lifetime.settledTotalNet >= 0 ? '+' : ''}
-                {lifetime.settledTotalNet} ₪
-              </span>
-              <span className={styles.statSub}>
-                ב־{lifetime.settledGamesPlayed} משחקים שהסתיימו
-              </span>
-            </div>
-            <div className={styles.statDivider} />
-            <div className={styles.statBlock}>
-              <span className={styles.statLabel}>סה״כ משחקים</span>
-              <span className={styles.statValue}>{lifetime.gamesPlayed}</span>
-              <span className={styles.statSub}>כולל פעילים</span>
-            </div>
-          </div>
+      {active.length > 0 && (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>משחקים פעילים</h3>
+          <ul className={styles.games}>
+            {active.map((g) => (
+              <li key={g.gameId} className={styles.gameRow}>
+                <button
+                  type="button"
+                  className={styles.gameButton}
+                  onClick={() => onOpenGame(g.gameId)}
+                >
+                  <div className={styles.gameMain}>
+                    <span className={styles.gameDate}>
+                      {formatDate(g.updatedAt)}
+                    </span>
+                    <span className={styles.gameMeta}>
+                      {g.playerCount} שחקנים · קופה {g.totalPot} ₪
+                    </span>
+                  </div>
+                  <span className={styles.gameActive}>המשך משחק ←</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-          {opponents.length > 0 && (
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>מול חברים</h3>
-              <ul className={styles.opponents}>
-                {opponents.map((o) => (
-                  <li key={o.displayName} className={styles.opponentRow}>
-                    <div className={styles.opponentIdentity}>
-                      <span className={styles.opponentName}>
-                        {o.displayName}
-                      </span>
-                      <span className={styles.opponentMeta}>
-                        {o.gamesTogether}{' '}
-                        {o.gamesTogether === 1 ? 'משחק' : 'משחקים'} משותפים
+      {leaderboard.length > 0 && (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>טבלת מובילים</h3>
+          <ul className={styles.board}>
+            {leaderboard.map((e, i) => {
+              const pos = e.totalNet >= 0;
+              const width = `${Math.round((Math.abs(e.totalNet) / maxAbsNet) * 100)}%`;
+              const isYou = profile?.display_name === e.name;
+              return (
+                <li
+                  key={e.key}
+                  className={`${styles.boardRow} ${isYou ? styles.boardYou : ''}`}
+                >
+                  <span className={styles.rank}>{i + 1}</span>
+                  <div className={styles.boardMain}>
+                    <div className={styles.boardTop}>
+                      <span className={styles.boardName}>{e.name}</span>
+                      <span
+                        className={`${styles.boardNet} ${pos ? styles.statPositive : styles.statNegative}`}
+                      >
+                        {pos ? '+' : ''}
+                        {e.totalNet} ₪
                       </span>
                     </div>
-                    <span
-                      className={`${styles.opponentNet} ${
-                        o.myNetWithThem >= 0
-                          ? styles.statPositive
-                          : styles.statNegative
-                      }`}
-                      title="הרווח/הפסד שלך במשחקים שבהם שיחקתם יחד"
-                    >
-                      {o.myNetWithThem >= 0 ? '+' : ''}
-                      {o.myNetWithThem} ₪
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className={styles.disclaimer}>
-                המספר משקף את הרווח/הפסד שלך בכלל המשחקים שבהם הצד השני
-                השתתף — לא בהכרח כסף שעבר ביניכם ישירות.
-              </p>
-            </div>
-          )}
-
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>משחקים אחרונים</h3>
-            <ul className={styles.games}>
-              {games.map((g) => (
-                <li key={g.gameId} className={styles.gameRow}>
-                  <button
-                    type="button"
-                    className={styles.gameButton}
-                    onClick={() => onOpenGame(g.gameId)}
-                  >
-                    <div className={styles.gameMain}>
-                      <span className={styles.gameDate}>
-                        {formatDate(g.updatedAt)}
-                      </span>
-                      <span className={styles.gameMeta}>
-                        {g.playerCount} שחקנים · קופה {g.totalPot} ₪
-                      </span>
+                    <div className={styles.barTrack}>
+                      <div
+                        className={`${styles.barFill} ${pos ? styles.barPos : styles.barNeg}`}
+                        style={{ width }}
+                      />
                     </div>
-                    <span
-                      className={`${styles.gameNet} ${
-                        g.myStillIn
-                          ? styles.gameActive
-                          : g.myNet >= 0
-                            ? styles.statPositive
-                            : styles.statNegative
-                      }`}
-                    >
-                      {g.myStillIn
-                        ? 'פעיל'
-                        : `${g.myNet >= 0 ? '+' : ''}${g.myNet} ₪`}
+                    <span className={styles.boardSub}>
+                      {e.gamesPlayed} משחקים · שיא רווח {e.biggestWin} ₪
                     </span>
-                  </button>
+                  </div>
                 </li>
-              ))}
-            </ul>
-          </div>
-        </>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {finished.length > 0 && (
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>משחקים שהסתיימו</h3>
+          <ul className={styles.games}>
+            {finished.map((g) => (
+              <li key={g.gameId} className={styles.gameRow}>
+                <button
+                  type="button"
+                  className={styles.gameButton}
+                  onClick={() => onOpenGame(g.gameId)}
+                >
+                  <div className={styles.gameMain}>
+                    <span className={styles.gameDate}>
+                      {formatDate(g.completedAt ?? g.updatedAt)}
+                    </span>
+                    <span className={styles.gameMeta}>
+                      {g.playerCount} שחקנים · קופה {g.totalPot} ₪
+                      {g.topName && ` · מנצח ${g.topName}`}
+                    </span>
+                  </div>
+                  {g.topName && (
+                    <span className={`${styles.gameNet} ${styles.statPositive}`}>
+                      +{g.topNet} ₪
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

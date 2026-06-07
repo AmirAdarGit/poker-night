@@ -18,6 +18,7 @@ interface Props {
   players: Player[];
   dispatch: (a: Action) => void;
   onBackToPlaying: () => void;
+  onCloseGame: () => void;
   onRequestNewGame: () => void;
 }
 
@@ -25,6 +26,7 @@ export function SettlementPhase({
   players,
   dispatch,
   onBackToPlaying,
+  onCloseGame,
   onRequestNewGame,
 }: Props) {
   const ranked = useMemo(
@@ -247,6 +249,13 @@ export function SettlementPhase({
           onClick={onBackToPlaying}
         >
           חזרה למשחק
+        </button>
+        <button
+          type="button"
+          className={styles.closeButton}
+          onClick={onCloseGame}
+        >
+          סגור משחק
         </button>
         <button
           type="button"

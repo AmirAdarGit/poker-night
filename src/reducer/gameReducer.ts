@@ -6,11 +6,14 @@ export type Action =
       type: 'add-player';
       name: string;
       initialBuyIn: number;
-      // Optional — used when the host auto-adds themselves so we know to
-      // map this player back to their account for history aggregation.
+      // Stable cross-game identity (roster_players.id). When present it also
+      // becomes the in-game player id, so the same friend can't be added twice.
+      rosterId?: string;
+      // Optional — legacy host auto-add path; maps the player to their account.
       userId?: string;
     }
   | { type: 'remove-player'; id: string }
+  | { type: 'set-initial-buy-in'; id: string; amount: number }
   | { type: 'set-player-phone'; id: string; phone: string }
   | { type: 'add-buy-in'; id: string; amount: number }
   | { type: 'cash-out'; id: string; amount: number }
@@ -26,15 +29,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'add-player': {
       const trimmed = action.name.trim();
       if (!trimmed) return state;
-      // If a userId is provided (host auto-add), use it as the player ID and
-      // reject duplicates by user. Otherwise generate a fresh ID — duplicate
+      // Roster pick (or legacy host auto-add) uses the stable id as the in-game
+      // id and rejects duplicates. Free-text players get a fresh id — duplicate
       // names are allowed because two friends might share a first name.
-      const id = action.userId ?? generatePlayerId();
-      if (action.userId && state.players.some((p) => p.id === id)) {
+      const stableId = action.rosterId ?? action.userId;
+      const id = stableId ?? generatePlayerId();
+      if (stableId && state.players.some((p) => p.id === id)) {
         return state;
       }
       const player: Player = {
         id,
+        rosterId: action.rosterId,
         name: trimmed,
         buyIns: [Math.max(0, Math.round(action.initialBuyIn))],
         cashedOut: null,
@@ -47,6 +52,18 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         players: state.players.filter((p) => p.id !== action.id),
+      };
+    }
+
+    case 'set-initial-buy-in': {
+      // Setup-phase only: a player has exactly one buy-in before the game
+      // starts. Editing it replaces that single entry.
+      const amount = Math.max(0, Math.round(action.amount));
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.id === action.id ? { ...p, buyIns: [amount] } : p,
+        ),
       };
     }
 

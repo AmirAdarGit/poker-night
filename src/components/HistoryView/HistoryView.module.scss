@@ -217,6 +217,94 @@
 .gameActive {
   color: $accent;
   font-size: $font-size-sm;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+}
+
+// ---- leaderboard ----
+.board {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.boardRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+}
+
+.boardYou {
+  border-color: $accent;
+}
+
+.rank {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+  min-width: 20px;
+  text-align: center;
+}
+
+.boardMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.boardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.boardName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boardNet {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  height: 6px;
+  border-radius: $radius-pill;
+  background: $bg-surface-elevated;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: $radius-pill;
+  min-width: 2px;
+  transition: width $dur-base $ease-out;
+}
+
+.barPos {
+  background: $positive;
+}
+
+.barNeg {
+  background: $negative;
+}
+
+.boardSub {
+  font-size: $font-size-xs;
+  color: $text-muted;
 }

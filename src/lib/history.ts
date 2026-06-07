@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import type { GameState, Player } from '../types';
-import { getNet, sumBuyIns } from '../types';
+import { getNet, playerKey, sumBuyIns } from '../types';
 
 export interface GameHistoryEntry {
   gameId: string;
@@ -8,118 +8,104 @@ export interface GameHistoryEntry {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+  // Convenience flag: a game with no completedAt is still open / returnable.
+  isActive: boolean;
   totalPot: number;
   playerCount: number;
-  myNet: number;
-  myStillIn: boolean;
   players: Player[];
+  // Best result in the game (for the finished-games list). Null if nobody
+  // has cashed out yet.
+  topName: string | null;
+  topNet: number;
 }
 
-export interface OpponentSummary {
-  // Identity is by name in this model — names are free-text per game.
-  displayName: string;
-  gamesTogether: number;
-  // My net across the games where this opponent played.
-  myNetWithThem: number;
-  // Their net across the same games.
-  theirNet: number;
-}
-
-export interface LifetimeStats {
+// One row of the all-time leaderboard, aggregated across every game by the
+// player's stable identity (rosterId), so renames never split a player.
+export interface LeaderboardEntry {
+  key: string;
+  name: string;
+  // Number of settled appearances (games where this player cashed out).
   gamesPlayed: number;
   totalNet: number;
-  settledGamesPlayed: number;
-  settledTotalNet: number;
+  biggestWin: number;
+  totalBuyIn: number;
 }
 
-// Identifies "me" in a game's state.players[] — the player whose ID matches
-// my user UUID (because the host auto-adds themselves with userId = auth uid).
-function findMe(players: Player[], myUserId: string): Player | undefined {
-  return players.find((p) => p.id === myUserId);
-}
-
-export async function fetchMyGames(
-  userId: string,
-): Promise<GameHistoryEntry[]> {
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from('games')
-    .select('id, host_id, state, completed_at, created_at, updated_at')
-    .eq('host_id', userId)
-    .order('updated_at', { ascending: false });
-  if (error || !data) return [];
-
-  return (data as Array<{
-    id: string;
-    host_id: string | null;
-    state: GameState;
-    completed_at: string | null;
-    created_at: string;
-    updated_at: string;
-  }>).map((g) => {
-    const me = findMe(g.state.players, userId);
-    const myNet = me ? getNet(me) : 0;
-    return {
-      gameId: g.id,
-      hostId: g.host_id,
-      createdAt: g.created_at,
-      updatedAt: g.updated_at,
-      completedAt: g.completed_at,
-      totalPot: g.state.players.reduce((s, p) => s + sumBuyIns(p), 0),
-      playerCount: g.state.players.length,
-      myNet,
-      myStillIn: !!me && me.cashedOut === null,
-      players: g.state.players,
-    };
-  });
-}
-
-export function computeLifetimeStats(
-  games: GameHistoryEntry[],
-): LifetimeStats {
-  const settled = games.filter((g) => !g.myStillIn);
+function toEntry(row: {
+  id: string;
+  host_id: string | null;
+  state: GameState;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}): GameHistoryEntry {
+  const players = row.state.players;
+  let topName: string | null = null;
+  let topNet = 0;
+  for (const p of players) {
+    if (p.cashedOut == null) continue;
+    const net = getNet(p);
+    if (topName === null || net > topNet) {
+      topName = p.name;
+      topNet = net;
+    }
+  }
   return {
-    gamesPlayed: games.length,
-    totalNet: games.reduce((s, g) => s + g.myNet, 0),
-    settledGamesPlayed: settled.length,
-    settledTotalNet: settled.reduce((s, g) => s + g.myNet, 0),
+    gameId: row.id,
+    hostId: row.host_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    completedAt: row.completed_at,
+    isActive: row.completed_at == null,
+    totalPot: players.reduce((s, p) => s + sumBuyIns(p), 0),
+    playerCount: players.length,
+    players,
+    topName,
+    topNet,
   };
 }
 
-export function computeOpponentSummaries(
+// All games, newest-touched first. The app is friends-only and game IDs are
+// public-readable, so everyone shares one history.
+export async function fetchAllGames(): Promise<GameHistoryEntry[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('games')
+    .select('id, host_id, state, completed_at, created_at, updated_at')
+    .order('updated_at', { ascending: false });
+  if (error || !data) return [];
+  return (data as Parameters<typeof toEntry>[0][]).map(toEntry);
+}
+
+export function computeLeaderboard(
   games: GameHistoryEntry[],
-  myUserId: string,
-): OpponentSummary[] {
-  const map = new Map<string, OpponentSummary>();
-
+): LeaderboardEntry[] {
+  const map = new Map<string, LeaderboardEntry>();
+  // games arrive newest-first, so the first name we see for a player is their
+  // most recent one — keep it and don't overwrite with older snapshots.
   for (const g of games) {
-    const me = findMe(g.players, myUserId);
-    if (!me) continue;
-    const myNet = getNet(me);
-
     for (const p of g.players) {
-      if (p.id === myUserId) continue;
-      // Aggregate by name — different IDs across games are expected since
-      // free-text players get fresh client-side IDs each game.
-      const key = p.name.trim();
-      if (!key) continue;
-      const existing = map.get(key);
-      const theirNet = getNet(p);
-      if (existing) {
-        existing.gamesTogether += 1;
-        existing.myNetWithThem += myNet;
-        existing.theirNet += theirNet;
+      if (p.cashedOut == null) continue; // unsettled results don't count
+      const key = playerKey(p);
+      const net = getNet(p);
+      const buyIn = sumBuyIns(p);
+      const e = map.get(key);
+      if (e) {
+        e.gamesPlayed += 1;
+        e.totalNet += net;
+        e.totalBuyIn += buyIn;
+        e.biggestWin = Math.max(e.biggestWin, net);
       } else {
         map.set(key, {
-          displayName: p.name,
-          gamesTogether: 1,
-          myNetWithThem: myNet,
-          theirNet,
+          key,
+          name: p.name,
+          gamesPlayed: 1,
+          totalNet: net,
+          biggestWin: net,
+          totalBuyIn: buyIn,
         });
       }
     }
   }
-
-  return [...map.values()].sort((a, b) => b.gamesTogether - a.gamesTogether);
+  return [...map.values()].sort((a, b) => b.totalNet - a.totalNet);
 }

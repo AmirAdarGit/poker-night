@@ -11,6 +11,7 @@
 drop table if exists public.game_players cascade;
 drop table if exists public.games cascade;
 drop table if exists public.profiles cascade;
+drop table if exists public.roster_players cascade;
 
 -- ----------------------------------------------------------------------------
 -- 1. profiles — extends auth.users with public-readable display info
@@ -132,6 +133,42 @@ create policy "anyone can update games"
 create policy "host can delete own games"
   on public.games for delete
   using (auth.uid() = host_id);
+
+-- ----------------------------------------------------------------------------
+-- 4b. roster_players — shared, app-wide list of players to pick from.
+-- ----------------------------------------------------------------------------
+create table public.roster_players (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+create unique index roster_players_name_idx
+  on public.roster_players (lower(btrim(name)));
+
+insert into public.roster_players (name)
+values
+  ('אמיר אדר'),
+  ('רז'),
+  ('גל ששון'),
+  ('איתי דוד'),
+  ('ירדן'),
+  ('זולא'),
+  ('עמית'),
+  ('איתמר'),
+  ('בן'),
+  ('עמרי')
+on conflict (lower(btrim(name))) do nothing;
+
+alter table public.roster_players enable row level security;
+
+create policy "roster is publicly readable"
+  on public.roster_players for select
+  using (true);
+
+create policy "signed-in users can add roster players"
+  on public.roster_players for insert
+  with check (auth.uid() is not null);
 
 -- ============================================================================
 -- 5. Realtime

@@ -31,13 +31,15 @@ export interface GameRow {
   updated_at: string;
 }
 
-export async function fetchGame(
-  id: string,
-): Promise<{ state: GameState; host_id: string | null } | null> {
+export async function fetchGame(id: string): Promise<{
+  state: GameState;
+  host_id: string | null;
+  completed_at: string | null;
+} | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('games')
-    .select('state, host_id')
+    .select('state, host_id, completed_at')
     .eq('id', id)
     .maybeSingle();
   if (error) {
@@ -48,7 +50,23 @@ export async function fetchGame(
   return {
     state: data.state as GameState,
     host_id: (data.host_id as string | null) ?? null,
+    completed_at: (data.completed_at as string | null) ?? null,
   };
+}
+
+// Marks a game finished (completed=true) or re-opens it (completed=false).
+// completed_at is the active/finished flag — null means still active.
+export async function setGameCompleted(
+  id: string,
+  completed: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!supabase) return { ok: false, error: 'supabase-not-configured' };
+  const { error } = await supabase
+    .from('games')
+    .update({ completed_at: completed ? new Date().toISOString() : null })
+    .eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 export async function createGame(

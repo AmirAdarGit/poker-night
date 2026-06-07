@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import styles from './PlayingPhase.module.scss';
 import type { Player } from '../../types';
 import { totalPot, DEFAULT_BUY_IN } from '../../types';
 import type { Action } from '../../reducer/gameReducer';
 import { PlayerCard } from '../PlayerCard/PlayerCard';
+import { useRoster } from '../../hooks/useRoster';
 
 interface Props {
   players: Player[];
   dispatch: (a: Action) => void;
   onGoToSettlement: () => void;
+  onCloseGame: () => void;
   onRequestNewGame: () => void;
 }
 
@@ -16,16 +18,24 @@ export function PlayingPhase({
   players,
   dispatch,
   onGoToSettlement,
+  onCloseGame,
   onRequestNewGame,
 }: Props) {
+  const { roster, add } = useRoster();
   const [showAdd, setShowAdd] = useState(false);
-  const [name, setName] = useState('');
   const [buyIn, setBuyIn] = useState(String(DEFAULT_BUY_IN));
+  const [newName, setNewName] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const pot = totalPot(players);
   const cashedOutCount = players.filter((p) => p.cashedOut !== null).length;
   const activeCount = players.length - cashedOutCount;
   const canSettle = cashedOutCount > 0;
+
+  const available = useMemo(
+    () => roster.filter((r) => !players.some((p) => p.rosterId === r.id)),
+    [roster, players],
+  );
 
   const sorted = [...players].sort((a, b) => {
     if (a.cashedOut !== null && b.cashedOut === null) return 1;
@@ -33,13 +43,23 @@ export function PlayingPhase({
     return a.joinedAt - b.joinedAt;
   });
 
-  const handleAdd = () => {
-    if (!name.trim()) return;
-    const amount = Number(buyIn) || DEFAULT_BUY_IN;
-    dispatch({ type: 'add-player', name, initialBuyIn: amount });
-    setName('');
-    setBuyIn(String(DEFAULT_BUY_IN));
+  const buyInValue = () => Math.max(0, Number(buyIn) || DEFAULT_BUY_IN);
+
+  const addExisting = (rosterId: string, name: string) => {
+    dispatch({ type: 'add-player', rosterId, name, initialBuyIn: buyInValue() });
     setShowAdd(false);
+    setBuyIn(String(DEFAULT_BUY_IN));
+  };
+
+  const handleAddNew = async () => {
+    const name = newName.trim();
+    if (!name || adding) return;
+    setAdding(true);
+    const created = await add(name);
+    setAdding(false);
+    if (!created) return;
+    setNewName('');
+    addExisting(created.id, created.name);
   };
 
   return (
@@ -69,49 +89,67 @@ export function PlayingPhase({
 
       {showAdd ? (
         <div className={styles.addForm}>
-          <input
-            type="text"
-            className={styles.nameInput}
-            placeholder="שם השחקן"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAdd();
-              }
-            }}
-            autoFocus
-          />
-          <input
-            type="number"
-            inputMode="numeric"
-            className={styles.amountInput}
-            value={buyIn}
-            onChange={(e) => setBuyIn(e.target.value)}
-            min={0}
-            step={10}
-            aria-label="סכום כניסה"
-          />
-          <button
-            type="button"
-            className={styles.confirmAdd}
-            onClick={handleAdd}
-            disabled={!name.trim()}
-          >
-            הוסף
-          </button>
-          <button
-            type="button"
-            className={styles.cancelAdd}
-            onClick={() => {
-              setShowAdd(false);
-              setName('');
-            }}
-            aria-label="ביטול"
-          >
-            ✕
-          </button>
+          <label className={styles.addRow}>
+            <span className={styles.addLabel}>סכום כניסה</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              className={styles.amountInput}
+              value={buyIn}
+              onChange={(e) => setBuyIn(e.target.value)}
+              min={0}
+              step={10}
+              aria-label="סכום כניסה"
+            />
+            <span className={styles.currency}>₪</span>
+            <button
+              type="button"
+              className={styles.cancelAdd}
+              onClick={() => setShowAdd(false)}
+              aria-label="ביטול"
+            >
+              ✕
+            </button>
+          </label>
+
+          {available.length > 0 && (
+            <div className={styles.chips}>
+              {available.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className={styles.chip}
+                  onClick={() => addExisting(r.id, r.name)}
+                >
+                  {r.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className={styles.addNew}>
+            <input
+              type="text"
+              className={styles.nameInput}
+              placeholder="שחקן חדש לרשימה"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleAddNew();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className={styles.confirmAdd}
+              onClick={() => void handleAddNew()}
+              disabled={!newName.trim() || adding}
+            >
+              הוסף
+            </button>
+          </div>
         </div>
       ) : (
         <button
@@ -132,13 +170,22 @@ export function PlayingPhase({
         >
           סיום וחישוב חובות
         </button>
-        <button
-          type="button"
-          className={styles.newGameButton}
-          onClick={onRequestNewGame}
-        >
-          משחק חדש
-        </button>
+        <div className={styles.footerRow}>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onCloseGame}
+          >
+            סגור משחק
+          </button>
+          <button
+            type="button"
+            className={styles.newGameButton}
+            onClick={onRequestNewGame}
+          >
+            משחק חדש
+          </button>
+        </div>
       </div>
     </section>
   );
