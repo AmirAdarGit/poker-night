@@ -36,3 +36,29 @@ export async function addRosterPlayer(
   if (error || !data) return null;
   return data as RosterPlayer;
 }
+
+// Renames a roster player. Returns the updated row, or null on failure (e.g. a
+// duplicate name within the group — the unique index rejects it).
+export async function renameRosterPlayer(
+  id: string,
+  name: string,
+): Promise<RosterPlayer | null> {
+  if (!supabase) return null;
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const { data, error } = await supabase
+    .from('roster_players')
+    .update({ name: trimmed })
+    .eq('id', id)
+    .select('id, name')
+    .single();
+  if (error || !data) return null;
+  return data as RosterPlayer;
+}
+
+// Removes a player from the group roster. Past games keep their name snapshot.
+export async function deleteRosterPlayer(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from('roster_players').delete().eq('id', id);
+  return !error;
+}

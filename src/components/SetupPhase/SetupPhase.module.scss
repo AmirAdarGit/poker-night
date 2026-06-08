@@ -51,6 +51,68 @@
   color: $text-muted;
 }
 
+.rosterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.rosterHint {
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.editToggle {
+  @include button-ghost;
+  min-height: 32px;
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
+}
+
+.editError {
+  font-size: $font-size-sm;
+  color: $negative;
+  background: rgba(255, 94, 94, 0.1);
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+}
+
+.editList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.editRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+}
+
+.editInput {
+  @include input-base;
+  flex: 1;
+}
+
+.saveButton {
+  @include button-base;
+  min-height: 40px;
+  width: 40px;
+  padding: 0;
+  background: $accent;
+  color: $text-on-accent;
+
+  &:not(:disabled):hover {
+    background: $accent-hover;
+  }
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

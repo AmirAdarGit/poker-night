@@ -62,6 +62,35 @@ describe('gameReducer — roster players', () => {
   });
 });
 
+describe('gameReducer — set-player-name', () => {
+  it('renames a selected player without touching buy-ins', () => {
+    let s = gameReducer(setup(), {
+      type: 'add-player',
+      rosterId: 'r1',
+      name: 'אמיר',
+      initialBuyIn: 50,
+    });
+    s = gameReducer(s, { type: 'set-player-name', id: 'r1', name: 'אמיר אדר' });
+    expect(s.players[0]!.name).toBe('אמיר אדר');
+    expect(s.players[0]!.buyIns).toEqual([50]);
+  });
+
+  it('ignores a blank name', () => {
+    const before = gameReducer(setup(), {
+      type: 'add-player',
+      rosterId: 'r1',
+      name: 'אמיר',
+      initialBuyIn: 50,
+    });
+    const after = gameReducer(before, {
+      type: 'set-player-name',
+      id: 'r1',
+      name: '   ',
+    });
+    expect(after.players[0]!.name).toBe('אמיר');
+  });
+});
+
 describe('gameReducer — set-initial-buy-in', () => {
   it('replaces the single setup buy-in', () => {
     let s = gameReducer(setup(), {

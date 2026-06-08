@@ -13,6 +13,7 @@ export type Action =
       userId?: string;
     }
   | { type: 'remove-player'; id: string }
+  | { type: 'set-player-name'; id: string; name: string }
   | { type: 'set-initial-buy-in'; id: string; amount: number }
   | { type: 'set-player-phone'; id: string; phone: string }
   | { type: 'add-buy-in'; id: string; amount: number }
@@ -52,6 +53,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         players: state.players.filter((p) => p.id !== action.id),
+      };
+    }
+
+    case 'set-player-name': {
+      const name = action.name.trim();
+      if (!name) return state;
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.id === action.id ? { ...p, name } : p,
+        ),
       };
     }
 
