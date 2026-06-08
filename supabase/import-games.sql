@@ -1,130 +1,138 @@
 -- =============================================================================
--- Poker Night — one-off import of 12 historical games into group
---   "חמישי שמח אצל זולא"
--- Net-only results (no buy-in data). Names base64-encoded so the SQL editor's
--- RTL rendering can't scramble them. Idempotent: on conflict (id) do nothing.
--- Run once in the Supabase SQL editor.
+-- Poker Night — import 12 historical games into group "חמישי שמח אצל זולא"
+-- Group + player ids hardcoded (resolved from the DB) — no name matching.
+-- Names base64-encoded (RTL-safe). Idempotent: on conflict (id) do nothing.
 -- =============================================================================
-with grp as (
-  select id as gid, owner_id from public.groups
-  where lower(btrim(name)) = lower(btrim(convert_from(decode('15fXnteZ16nXmSDXqdee15cg15DXptecINeW15XXnNeQ','base64'),'utf8')))
-  limit 1
-),
-raw(idx, date_iso, name_b64, net) as (
-  values
-  ('imp01','2026-03-13','15DXnteZ16g=',315),
-  ('imp01','2026-03-13','16nXqdeV158=',460),
-  ('imp01','2026-03-13','16jXlg==',16),
-  ('imp01','2026-03-13','16LXldee16jXmQ==',-50),
-  ('imp01','2026-03-13','15nXqNeT158=',-140),
-  ('imp01','2026-03-13','15DXmdeZ15w=',-151),
-  ('imp01','2026-03-13','15DXmdeq15k=',-150),
-  ('imp01','2026-03-13','15bXldec15A=',-300),
-  ('imp02','2026-03-20','16LXldee16jXmQ==',400),
-  ('imp02','2026-03-20','16LXnteZ16o=',196),
-  ('imp02','2026-03-20','15DXmdeq15k=',60),
-  ('imp02','2026-03-20','15DXmdeZ15w=',5),
-  ('imp02','2026-03-20','15DXnteZ16g=',-50),
-  ('imp02','2026-03-20','15nXqNeT158=',-115),
-  ('imp02','2026-03-20','15bXldec15A=',-196),
-  ('imp02','2026-03-20','16nXqdeV158=',-300),
-  ('imp03','2026-03-27','15DXmdeq15k=',145),
-  ('imp03','2026-03-27','16jXlg==',130),
-  ('imp03','2026-03-27','16nXqdeV158=',-58),
-  ('imp03','2026-03-27','15nXqNeT158=',-50),
-  ('imp03','2026-03-27','15DXnteZ16g=',-200),
-  ('imp03','2026-03-27','15bXldec15A=',-220),
-  ('imp03','2026-03-27','16LXldee16jXmQ==',-255),
-  ('imp04','2026-04-03','15nXqNeT158=',370),
-  ('imp04','2026-04-03','15DXmdeq15k=',110),
-  ('imp04','2026-04-03','16nXqdeV158=',71),
-  ('imp04','2026-04-03','16LXnteZ16o=',70),
-  ('imp04','2026-04-03','16jXlg==',15),
-  ('imp04','2026-04-03','15DXnteZ16g=',-50),
-  ('imp04','2026-04-03','15DXmdeZ15w=',-200),
-  ('imp04','2026-04-03','15bXldec15A=',-450),
-  ('imp05','2026-04-10','15bXldec15A=',300),
-  ('imp05','2026-04-10','16nXqdeV158=',120),
-  ('imp05','2026-04-10','15DXnteZ16g=',45),
-  ('imp05','2026-04-10','15DXmdeZ15w=',-50),
-  ('imp05','2026-04-10','16LXnteZ16o=',-200),
-  ('imp05','2026-04-10','15DXmdeq15k=',-212),
-  ('imp06','2026-04-17','15nXqNeT158=',57),
-  ('imp06','2026-04-17','15DXmdeZ15w=',50),
-  ('imp06','2026-04-17','15DXnteZ16g=',20),
-  ('imp06','2026-04-17','15DXmdeq157XqA==',17),
-  ('imp06','2026-04-17','16jXlg==',10),
-  ('imp06','2026-04-17','15bXldec15A=',-120),
-  ('imp07','2026-04-24','16jXlg==',275),
-  ('imp07','2026-04-24','16nXqdeV158=',125),
-  ('imp07','2026-04-24','15DXnteZ16g=',90),
-  ('imp07','2026-04-24','15DXmdeZ15w=',75),
-  ('imp07','2026-04-24','16LXldee16jXmQ==',-50),
-  ('imp07','2026-04-24','15nXqNeT158=',-50),
-  ('imp07','2026-04-24','15bXldec15A=',-440),
-  ('imp08','2026-05-01','15nXqNeT158=',240),
-  ('imp08','2026-05-01','16nXqdeV158=',150),
-  ('imp08','2026-05-01','15DXnteZ16g=',129),
-  ('imp08','2026-05-01','15bXldec15A=',44),
-  ('imp08','2026-05-01','15DXmdeZ15w=',-21),
-  ('imp08','2026-05-01','15DXmdeq157XqA==',-100),
-  ('imp08','2026-05-01','16LXnteZ16o=',-48),
-  ('imp08','2026-05-01','15DXmdeq15k=',-129),
-  ('imp08','2026-05-01','16LXldee16jXmQ==',-215),
-  ('imp09','2026-05-08','15nXqNeT158=',120),
-  ('imp09','2026-05-08','16nXqdeV158=',92),
-  ('imp09','2026-05-08','15DXmdeZ15w=',-6),
-  ('imp09','2026-05-08','15DXmdeq15k=',-58),
-  ('imp09','2026-05-08','16LXldee16jXmQ==',-150),
-  ('imp10','2026-05-15','15DXnteZ16g=',316),
-  ('imp10','2026-05-15','16jXlg==',140),
-  ('imp10','2026-05-15','15bXldec15A=',90),
-  ('imp10','2026-05-15','15nXqNeT158=',30),
-  ('imp10','2026-05-15','15DXmdeZ15w=',-100),
-  ('imp10','2026-05-15','16nXqdeV158=',-206),
-  ('imp10','2026-05-15','15DXmdeq15k=',-262),
-  ('imp11','2026-05-29','16nXqdeV158=',590),
-  ('imp11','2026-05-29','15DXmdeZ15w=',160),
-  ('imp11','2026-05-29','16jXlg==',106),
-  ('imp11','2026-05-29','15DXmdeq15k=',-88),
-  ('imp11','2026-05-29','15nXqNeT158=',-150),
-  ('imp11','2026-05-29','15DXnteZ16g=',-250),
-  ('imp11','2026-05-29','15bXldec15A=',-300),
-  ('imp12','2026-06-06','15DXmdeq15k=',100),
-  ('imp12','2026-06-06','15DXmdeZ15w=',40),
-  ('imp12','2026-06-06','15nXqNeT158=',25),
-  ('imp12','2026-06-06','15DXnteZ16g=',-185)
-),
-resolved as (
-  select r.idx, r.date_iso,
-    jsonb_build_object(
-      'id', rp.id::text,
-      'rosterId', rp.id::text,
-      'name', rp.name,
-      'buyIns', case when r.net < 0 then jsonb_build_array(-r.net) else jsonb_build_array(0) end,
-      'cashedOut', case when r.net > 0 then r.net else 0 end,
-      'joinedAt', (extract(epoch from (r.date_iso||'T20:00:00Z')::timestamptz)*1000)::bigint
-    ) as player
-  from raw r
-  cross join grp
-  join public.roster_players rp
-    on rp.group_id = grp.gid
-   and lower(btrim(rp.name)) = lower(btrim(convert_from(decode(r.name_b64,'base64'),'utf8')))
-),
-agg as (
-  select idx, min(date_iso) as date_iso, jsonb_agg(player) as players
-  from resolved group by idx
-)
 insert into public.games (id, host_id, group_id, state, completed_at, created_at, updated_at)
-select
-  r.idx,
-  grp.owner_id,
-  grp.gid,
-  jsonb_build_object('phase','settlement','players', a.players),
-  (a.date_iso||'T20:00:00Z')::timestamptz,
-  (a.date_iso||'T20:00:00Z')::timestamptz,
-  (a.date_iso||'T20:00:00Z')::timestamptz
-from agg a
-join (select distinct idx from raw) r on r.idx = a.idx
-cross join grp
+values
+  ('imp01', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',315,'joinedAt',1773432000000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',460,'joinedAt',1773432000000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',16,'joinedAt',1773432000000),
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1773432000000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(140),'cashedOut',0,'joinedAt',1773432000000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(151),'cashedOut',0,'joinedAt',1773432000000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(150),'cashedOut',0,'joinedAt',1773432000000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(300),'cashedOut',0,'joinedAt',1773432000000)
+   )),
+   '2026-03-13T20:00:00Z'::timestamptz, '2026-03-13T20:00:00Z'::timestamptz, '2026-03-13T20:00:00Z'::timestamptz),
+  ('imp02', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',400,'joinedAt',1774036800000),
+    jsonb_build_object('id','3868c7b8-7df6-4fed-9e05-90dae08badf9','rosterId','3868c7b8-7df6-4fed-9e05-90dae08badf9','name',convert_from(decode('16LXnteZ16o=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',196,'joinedAt',1774036800000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',60,'joinedAt',1774036800000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',5,'joinedAt',1774036800000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1774036800000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(115),'cashedOut',0,'joinedAt',1774036800000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(196),'cashedOut',0,'joinedAt',1774036800000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(300),'cashedOut',0,'joinedAt',1774036800000)
+   )),
+   '2026-03-20T20:00:00Z'::timestamptz, '2026-03-20T20:00:00Z'::timestamptz, '2026-03-20T20:00:00Z'::timestamptz),
+  ('imp03', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',145,'joinedAt',1774641600000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',130,'joinedAt',1774641600000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(58),'cashedOut',0,'joinedAt',1774641600000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1774641600000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(200),'cashedOut',0,'joinedAt',1774641600000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(220),'cashedOut',0,'joinedAt',1774641600000),
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(255),'cashedOut',0,'joinedAt',1774641600000)
+   )),
+   '2026-03-27T20:00:00Z'::timestamptz, '2026-03-27T20:00:00Z'::timestamptz, '2026-03-27T20:00:00Z'::timestamptz),
+  ('imp04', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',370,'joinedAt',1775246400000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',110,'joinedAt',1775246400000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',71,'joinedAt',1775246400000),
+    jsonb_build_object('id','3868c7b8-7df6-4fed-9e05-90dae08badf9','rosterId','3868c7b8-7df6-4fed-9e05-90dae08badf9','name',convert_from(decode('16LXnteZ16o=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',70,'joinedAt',1775246400000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',15,'joinedAt',1775246400000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1775246400000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(200),'cashedOut',0,'joinedAt',1775246400000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(450),'cashedOut',0,'joinedAt',1775246400000)
+   )),
+   '2026-04-03T20:00:00Z'::timestamptz, '2026-04-03T20:00:00Z'::timestamptz, '2026-04-03T20:00:00Z'::timestamptz),
+  ('imp05', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',300,'joinedAt',1775851200000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',120,'joinedAt',1775851200000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',45,'joinedAt',1775851200000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1775851200000),
+    jsonb_build_object('id','3868c7b8-7df6-4fed-9e05-90dae08badf9','rosterId','3868c7b8-7df6-4fed-9e05-90dae08badf9','name',convert_from(decode('16LXnteZ16o=','base64'),'utf8'),'buyIns',jsonb_build_array(200),'cashedOut',0,'joinedAt',1775851200000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(212),'cashedOut',0,'joinedAt',1775851200000)
+   )),
+   '2026-04-10T20:00:00Z'::timestamptz, '2026-04-10T20:00:00Z'::timestamptz, '2026-04-10T20:00:00Z'::timestamptz),
+  ('imp06', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',57,'joinedAt',1776456000000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',50,'joinedAt',1776456000000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',20,'joinedAt',1776456000000),
+    jsonb_build_object('id','bad9401c-e260-41bb-b421-65983b97709e','rosterId','bad9401c-e260-41bb-b421-65983b97709e','name',convert_from(decode('15DXmdeq157XqA==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',17,'joinedAt',1776456000000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',10,'joinedAt',1776456000000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(120),'cashedOut',0,'joinedAt',1776456000000)
+   )),
+   '2026-04-17T20:00:00Z'::timestamptz, '2026-04-17T20:00:00Z'::timestamptz, '2026-04-17T20:00:00Z'::timestamptz),
+  ('imp07', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',275,'joinedAt',1777060800000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',125,'joinedAt',1777060800000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',90,'joinedAt',1777060800000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',75,'joinedAt',1777060800000),
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1777060800000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(50),'cashedOut',0,'joinedAt',1777060800000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(440),'cashedOut',0,'joinedAt',1777060800000)
+   )),
+   '2026-04-24T20:00:00Z'::timestamptz, '2026-04-24T20:00:00Z'::timestamptz, '2026-04-24T20:00:00Z'::timestamptz),
+  ('imp08', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',240,'joinedAt',1777665600000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',150,'joinedAt',1777665600000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',129,'joinedAt',1777665600000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',44,'joinedAt',1777665600000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(21),'cashedOut',0,'joinedAt',1777665600000),
+    jsonb_build_object('id','bad9401c-e260-41bb-b421-65983b97709e','rosterId','bad9401c-e260-41bb-b421-65983b97709e','name',convert_from(decode('15DXmdeq157XqA==','base64'),'utf8'),'buyIns',jsonb_build_array(100),'cashedOut',0,'joinedAt',1777665600000),
+    jsonb_build_object('id','3868c7b8-7df6-4fed-9e05-90dae08badf9','rosterId','3868c7b8-7df6-4fed-9e05-90dae08badf9','name',convert_from(decode('16LXnteZ16o=','base64'),'utf8'),'buyIns',jsonb_build_array(48),'cashedOut',0,'joinedAt',1777665600000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(129),'cashedOut',0,'joinedAt',1777665600000),
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(215),'cashedOut',0,'joinedAt',1777665600000)
+   )),
+   '2026-05-01T20:00:00Z'::timestamptz, '2026-05-01T20:00:00Z'::timestamptz, '2026-05-01T20:00:00Z'::timestamptz),
+  ('imp09', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',120,'joinedAt',1778270400000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',92,'joinedAt',1778270400000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(6),'cashedOut',0,'joinedAt',1778270400000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(58),'cashedOut',0,'joinedAt',1778270400000),
+    jsonb_build_object('id','a0b28360-3af0-4b0d-826e-adba18a4f394','rosterId','a0b28360-3af0-4b0d-826e-adba18a4f394','name',convert_from(decode('16LXldee16jXmQ==','base64'),'utf8'),'buyIns',jsonb_build_array(150),'cashedOut',0,'joinedAt',1778270400000)
+   )),
+   '2026-05-08T20:00:00Z'::timestamptz, '2026-05-08T20:00:00Z'::timestamptz, '2026-05-08T20:00:00Z'::timestamptz),
+  ('imp10', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',316,'joinedAt',1778875200000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',140,'joinedAt',1778875200000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',90,'joinedAt',1778875200000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',30,'joinedAt',1778875200000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(100),'cashedOut',0,'joinedAt',1778875200000),
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(206),'cashedOut',0,'joinedAt',1778875200000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(262),'cashedOut',0,'joinedAt',1778875200000)
+   )),
+   '2026-05-15T20:00:00Z'::timestamptz, '2026-05-15T20:00:00Z'::timestamptz, '2026-05-15T20:00:00Z'::timestamptz),
+  ('imp11', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','rosterId','7a3c0b00-1d77-4f97-bddf-d296c8b08b5b','name',convert_from(decode('16nXqdeV158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',590,'joinedAt',1780084800000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',160,'joinedAt',1780084800000),
+    jsonb_build_object('id','682ba926-1345-4905-a555-b502ae79e52f','rosterId','682ba926-1345-4905-a555-b502ae79e52f','name',convert_from(decode('16jXlg==','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',106,'joinedAt',1780084800000),
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(88),'cashedOut',0,'joinedAt',1780084800000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(150),'cashedOut',0,'joinedAt',1780084800000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(250),'cashedOut',0,'joinedAt',1780084800000),
+    jsonb_build_object('id','b0fda376-f44b-4f53-bf9a-cd21f43fe731','rosterId','b0fda376-f44b-4f53-bf9a-cd21f43fe731','name',convert_from(decode('15bXldec15A=','base64'),'utf8'),'buyIns',jsonb_build_array(300),'cashedOut',0,'joinedAt',1780084800000)
+   )),
+   '2026-05-29T20:00:00Z'::timestamptz, '2026-05-29T20:00:00Z'::timestamptz, '2026-05-29T20:00:00Z'::timestamptz),
+  ('imp12', null, 'f5f2634e-5479-4cf9-aa28-25f33abb181d'::uuid,
+   jsonb_build_object('phase','settlement','players', jsonb_build_array(
+    jsonb_build_object('id','e830e0df-896d-4d14-80ca-aeebf8e52ee2','rosterId','e830e0df-896d-4d14-80ca-aeebf8e52ee2','name',convert_from(decode('15DXmdeq15k=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',100,'joinedAt',1780776000000),
+    jsonb_build_object('id','6947c74f-764d-4ba8-b581-f502edf600ac','rosterId','6947c74f-764d-4ba8-b581-f502edf600ac','name',convert_from(decode('15DXmdeZ15w=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',40,'joinedAt',1780776000000),
+    jsonb_build_object('id','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','rosterId','cf1f75ed-b3c9-4947-ac24-e79aba08f5a7','name',convert_from(decode('15nXqNeT158=','base64'),'utf8'),'buyIns',jsonb_build_array(0),'cashedOut',25,'joinedAt',1780776000000),
+    jsonb_build_object('id','a810be84-7b36-4070-a1d7-8d370c97351b','rosterId','a810be84-7b36-4070-a1d7-8d370c97351b','name',convert_from(decode('15DXnteZ16g=','base64'),'utf8'),'buyIns',jsonb_build_array(185),'cashedOut',0,'joinedAt',1780776000000)
+   )),
+   '2026-06-06T20:00:00Z'::timestamptz, '2026-06-06T20:00:00Z'::timestamptz, '2026-06-06T20:00:00Z'::timestamptz)
 on conflict (id) do nothing;
