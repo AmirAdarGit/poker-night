@@ -7,6 +7,7 @@ import {
   fetchAllGames,
   type GameHistoryEntry,
 } from '../../lib/history';
+import { getNet, type Player } from '../../types';
 
 interface Props {
   onClose: () => void;
@@ -172,37 +173,65 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
 
       {finished.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>משחקים שהסתיימו</h3>
-          <ul className={styles.games}>
+          <h3 className={styles.sectionTitle}>פירוט לפי משחק</h3>
+          <div className={styles.gameGrid}>
             {finished.map((g) => (
-              <li key={g.gameId} className={styles.gameRow}>
-                <button
-                  type="button"
-                  className={styles.gameButton}
-                  onClick={() => onOpenGame(g.gameId)}
-                >
-                  <div className={styles.gameMain}>
-                    <span className={styles.gameDate}>
-                      {formatDate(g.completedAt ?? g.updatedAt)}
-                    </span>
-                    <span className={styles.gameMeta}>
-                      {g.playerCount} שחקנים · קופה {g.totalPot} ₪
-                      {g.topName && ` · מנצח ${g.topName}`}
-                    </span>
-                  </div>
-                  {g.topName && (
-                    <span className={`${styles.gameNet} ${styles.statPositive}`}>
-                      +{g.topNet} ₪
-                    </span>
-                  )}
-                </button>
-              </li>
+              <button
+                key={g.gameId}
+                type="button"
+                className={styles.gameCard}
+                onClick={() => onOpenGame(g.gameId)}
+              >
+                <div className={styles.gameCardHead}>
+                  <span className={styles.gameCardDate}>
+                    משחק {formatDate(g.completedAt ?? g.updatedAt)}
+                  </span>
+                  <span className={styles.gameCardMeta}>
+                    {g.playerCount} שחקנים
+                  </span>
+                </div>
+                <ul className={styles.gcRows}>
+                  {playerNets(g.players).map((row) => (
+                    <li key={row.id} className={styles.gcRow}>
+                      <span className={styles.gcName}>{row.name}</span>
+                      <span
+                        className={
+                          row.active
+                            ? styles.gcActive
+                            : row.net >= 0
+                              ? styles.statPositive
+                              : styles.statNegative
+                        }
+                      >
+                        {row.active
+                          ? 'פעיל'
+                          : `${row.net >= 0 ? '+' : ''}${row.net}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </button>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </section>
   );
+}
+
+// Per-player net for a game card: winners first, still-in players last.
+function playerNets(players: Player[]) {
+  return players
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      net: getNet(p),
+      active: p.cashedOut == null,
+    }))
+    .sort((a, b) => {
+      if (a.active !== b.active) return a.active ? 1 : -1;
+      return b.net - a.net;
+    });
 }
 
 function formatDate(iso: string): string {

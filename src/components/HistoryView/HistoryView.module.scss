@@ -272,6 +272,79 @@
   font-variant-numeric: tabular-nums;
 }
 
+// ---- per-game cards ----
+.gameGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: $space-3;
+}
+
+.gameCard {
+  @include card;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  border-top: 2px solid $accent;
+  transition: border-color $dur-fast $ease-out;
+
+  &:hover {
+    border-color: $accent;
+  }
+}
+
+.gameCardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: $space-2;
+}
+
+.gameCardDate {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $accent;
+}
+
+.gameCardMeta {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.gcRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gcRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-1 0;
+  border-bottom: 1px dashed $border-subtle;
+  font-size: $font-size-sm;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gcName {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.gcActive {
+  color: $accent;
+  font-size: $font-size-xs;
+}
+
 // ---- leaderboard ----
 .board {
   list-style: none;
