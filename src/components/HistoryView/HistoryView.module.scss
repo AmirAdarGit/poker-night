@@ -27,6 +27,12 @@
   color: $text-primary;
 }
 
+.groupTag {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $text-muted;
+}
+
 .loading,
 .empty {
   text-align: center;

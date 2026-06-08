@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from './HistoryView.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGroup } from '../../contexts/GroupContext';
 import {
   computeLeaderboard,
   fetchAllGames,
@@ -14,12 +15,14 @@ interface Props {
 
 export function HistoryView({ onClose, onOpenGame }: Props) {
   const { profile } = useAuth();
+  const { activeGroupId, activeGroup } = useGroup();
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchAllGames()
+    setGames(null);
+    fetchAllGames(activeGroupId)
       .then((rows) => {
         if (!cancelled) setGames(rows);
       })
@@ -29,7 +32,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeGroupId]);
 
   const leaderboard = useMemo(
     () => (games ? computeLeaderboard(games) : []),
@@ -60,7 +63,12 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
         >
           ←
         </button>
-        <h2 className={styles.title}>היסטוריה וטבלת מובילים</h2>
+        <h2 className={styles.title}>
+          היסטוריה וטבלת מובילים
+          {activeGroup && (
+            <span className={styles.groupTag}> · {activeGroup.name}</span>
+          )}
+        </h2>
       </header>
 
       {error && <div className={styles.error}>שגיאה: {error}</div>}

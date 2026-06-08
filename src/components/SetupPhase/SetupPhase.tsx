@@ -7,14 +7,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRoster } from '../../hooks/useRoster';
 
 interface Props {
+  groupId: string | null;
   players: Player[];
   dispatch: (a: Action) => void;
   onStartGame: () => void;
 }
 
-export function SetupPhase({ players, dispatch, onStartGame }: Props) {
+export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
   const { profile } = useAuth();
-  const { roster, loading, add } = useRoster();
+  const { roster, loading, add } = useRoster(groupId);
   const [defaultBuyIn, setDefaultBuyIn] = useState<string>(
     String(DEFAULT_BUY_IN),
   );
@@ -89,6 +90,10 @@ export function SetupPhase({ players, dispatch, onStartGame }: Props) {
 
       {loading ? (
         <div className={styles.empty}>טוען שחקנים…</div>
+      ) : roster.length === 0 ? (
+        <div className={styles.empty}>
+          עדיין אין שחקנים בקבוצה — הוסיפו את הראשון למטה.
+        </div>
       ) : (
         <div className={styles.chips}>
           {roster.map((r) => {

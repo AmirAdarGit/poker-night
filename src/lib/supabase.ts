@@ -72,12 +72,14 @@ export async function setGameCompleted(
 export async function createGame(
   id: string,
   hostId: string,
+  groupId: string,
   state: GameState,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!supabase) return { ok: false, error: 'supabase-not-configured' };
   const { error } = await supabase.from('games').insert({
     id,
     host_id: hostId,
+    group_id: groupId,
     state,
   });
   if (error) return { ok: false, error: error.message };

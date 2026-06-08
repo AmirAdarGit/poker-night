@@ -1,0 +1,95 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.panel {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-6 $space-5;
+}
+
+.noGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.intro {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $text-muted;
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $text-secondary;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-2;
+}
+
+.input {
+  @include input-base;
+}
+
+.codeInput {
+  @include input-base;
+  text-align: center;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+
+.submit {
+  @include button-primary;
+  padding-inline: $space-5;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $negative;
+  background: rgba(255, 94, 94, 0.1);
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  color: $text-muted;
+  font-size: $font-size-sm;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $border-subtle;
+  }
+}

@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './App.module.scss';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { GroupProvider, useGroup } from './contexts/GroupContext';
 import { useGameSync } from './hooks/useGameSync';
 import { generateGameId, isValidGameId } from './lib/gameId';
 import {
   buildGameUrl,
+  clearInviteCodeFromUrl,
   readGameIdFromUrl,
+  readInviteCodeFromUrl,
   setGameIdInUrl,
   shareGameLink,
 } from './lib/share';
@@ -20,17 +23,29 @@ import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
 import { AuthScreen } from './components/AuthScreen/AuthScreen';
 import { CompleteProfile } from './components/CompleteProfile/CompleteProfile';
 import { UserMenu } from './components/UserMenu/UserMenu';
+import { GroupSwitcher } from './components/GroupSwitcher/GroupSwitcher';
+import { NoGroup } from './components/GroupForms/NoGroup';
 import { HistoryView } from './components/HistoryView/HistoryView';
 
 type View = 'game' | 'history' | 'auth';
 
 function AppInner() {
   const { user, profile, loading } = useAuth();
+  const {
+    activeGroupId,
+    groups,
+    loading: groupsLoading,
+    joinByCode,
+  } = useGroup();
 
   const [gameId, setGameId] = useState<string | null>(() => {
     const fromUrl = readGameIdFromUrl();
     return fromUrl && isValidGameId(fromUrl) ? fromUrl : null;
   });
+  const [pendingInvite] = useState<string | null>(() =>
+    readInviteCodeFromUrl(),
+  );
+  const joinAttempted = useRef(false);
   const { state, dispatch, syncStatus, lastError, completedAt, closeGame, reopenGame } =
     useGameSync(gameId);
 
@@ -54,15 +69,33 @@ function AppInner() {
     if (lastError) showToast(`שגיאת סנכרון: ${lastError}`);
   }, [lastError, showToast]);
 
+  // Redeem a ?join=<code> invite once the user is signed in.
+  useEffect(() => {
+    if (!user || !pendingInvite || joinAttempted.current) return;
+    joinAttempted.current = true;
+    void joinByCode(pendingInvite).then((res) => {
+      clearInviteCodeFromUrl();
+      showToast(
+        res.ok
+          ? `הצטרפת לקבוצה ${res.group.name}`
+          : 'קוד ההזמנה לא תקין',
+      );
+    });
+  }, [user, pendingInvite, joinByCode, showToast]);
+
   const handleStartGame = useCallback(async () => {
     if (!user || !profile) {
       setView('auth');
       return;
     }
+    if (!activeGroupId) {
+      showToast('בחרו או צרו קבוצה כדי להתחיל משחק');
+      return;
+    }
     if (state.players.length < 2) return;
     const id = generateGameId();
     const next = { ...state, phase: 'playing' as const };
-    const result = await createGame(id, user.id, next);
+    const result = await createGame(id, user.id, activeGroupId, next);
     if (!result.ok) {
       showToast(`לא ניתן ליצור משחק: ${result.error}`);
       return;
@@ -70,7 +103,7 @@ function AppInner() {
     setGameId(id);
     setGameIdInUrl(id);
     dispatch({ type: 'hydrate', state: next });
-  }, [user, profile, state, dispatch, showToast]);
+  }, [user, profile, activeGroupId, state, dispatch, showToast]);
 
   const handleShare = useCallback(async () => {
     if (!gameId) return;
@@ -114,7 +147,7 @@ function AppInner() {
     [gameId, dispatch],
   );
 
-  if (loading) {
+  if (loading || (user && groupsLoading)) {
     return <div className={styles.loadingScreen}>טוען…</div>;
   }
 
@@ -143,6 +176,7 @@ function AppInner() {
             }}
             onOpenAuth={() => setView('auth')}
           />
+          {user && activeGroupId && <GroupSwitcher onToast={showToast} />}
         </div>
         <h1 className={styles.title}>פוקר נייט</h1>
         <div className={styles.headerEnd}>
@@ -200,8 +234,11 @@ function AppInner() {
                       התחברות / הרשמה
                     </button>
                   </div>
+                ) : groups.length === 0 ? (
+                  <NoGroup initialJoinCode={pendingInvite ?? undefined} />
                 ) : (
                   <SetupPhase
+                    groupId={activeGroupId}
                     players={state.players}
                     dispatch={dispatch}
                     onStartGame={handleStartGame}
@@ -252,7 +289,9 @@ function AppInner() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppInner />
+      <GroupProvider>
+        <AppInner />
+      </GroupProvider>
     </AuthProvider>
   );
 }

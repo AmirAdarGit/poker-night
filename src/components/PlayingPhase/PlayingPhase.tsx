@@ -5,6 +5,7 @@ import { totalPot, DEFAULT_BUY_IN } from '../../types';
 import type { Action } from '../../reducer/gameReducer';
 import { PlayerCard } from '../PlayerCard/PlayerCard';
 import { useRoster } from '../../hooks/useRoster';
+import { useGroup } from '../../contexts/GroupContext';
 
 interface Props {
   players: Player[];
@@ -21,7 +22,8 @@ export function PlayingPhase({
   onCloseGame,
   onRequestNewGame,
 }: Props) {
-  const { roster, add } = useRoster();
+  const { activeGroupId } = useGroup();
+  const { roster, add } = useRoster(activeGroupId);
   const [showAdd, setShowAdd] = useState(false);
   const [buyIn, setBuyIn] = useState(String(DEFAULT_BUY_IN));
   const [newName, setNewName] = useState('');

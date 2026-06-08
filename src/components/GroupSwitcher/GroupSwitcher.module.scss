@@ -1,0 +1,103 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.container {
+  position: relative;
+}
+
+.trigger {
+  @include button-base;
+  min-height: 36px;
+  padding: $space-1 $space-3;
+  gap: $space-2;
+  background: $bg-surface-raised;
+  color: $text-primary;
+  border-color: $border-subtle;
+  font-weight: $font-weight-semibold;
+  max-width: 160px;
+}
+
+.triggerName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  font-size: 9px;
+  color: $text-muted;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + #{$space-2});
+  inset-inline-start: 0;
+  z-index: $z-modal;
+  width: 280px;
+  max-width: 80vw;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-3;
+  background: $bg-surface-elevated;
+  border: 1px solid $border-strong;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.groupItem {
+  @include button-ghost;
+  justify-content: space-between;
+  min-height: 40px;
+  width: 100%;
+  text-align: start;
+}
+
+.groupActive {
+  color: $accent;
+  font-weight: $font-weight-semibold;
+}
+
+.check {
+  color: $accent;
+}
+
+.inviteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  padding: $space-1 $space-2;
+}
+
+.inviteLabel {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.inviteCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: $font-size-md;
+  letter-spacing: 0.12em;
+  color: $accent;
+  direction: ltr;
+}
+
+.action {
+  @include button-ghost;
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+.sep {
+  height: 1px;
+  background: $border-subtle;
+  margin: $space-1 0;
+}

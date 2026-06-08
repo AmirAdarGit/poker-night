@@ -65,13 +65,17 @@ function toEntry(row: {
   };
 }
 
-// All games, newest-touched first. The app is friends-only and game IDs are
-// public-readable, so everyone shares one history.
-export async function fetchAllGames(): Promise<GameHistoryEntry[]> {
-  if (!supabase) return [];
+// All games in a group, newest-touched first. RLS already restricts rows to
+// the user's member groups; the explicit group_id filter keeps a multi-group
+// user's history scoped to the active group only.
+export async function fetchAllGames(
+  groupId: string | null,
+): Promise<GameHistoryEntry[]> {
+  if (!supabase || !groupId) return [];
   const { data, error } = await supabase
     .from('games')
     .select('id, host_id, state, completed_at, created_at, updated_at')
+    .eq('group_id', groupId)
     .order('updated_at', { ascending: false });
   if (error || !data) return [];
   return (data as Parameters<typeof toEntry>[0][]).map(toEntry);

@@ -55,3 +55,25 @@ export function setGameIdInUrl(gameId: string | null): void {
   url.hash = '';
   window.history.replaceState({}, '', url.toString());
 }
+
+// ---- Group invites (?join=<code>) ----
+
+export function buildInviteUrl(code: string): string {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('join', code);
+  url.hash = '';
+  return url.toString();
+}
+
+export function readInviteCodeFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('join');
+  return code && code.length > 0 ? code : null;
+}
+
+export function clearInviteCodeFromUrl(): void {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('join');
+  window.history.replaceState({}, '', url.toString());
+}
