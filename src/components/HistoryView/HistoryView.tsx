@@ -9,6 +9,28 @@ import {
 } from '../../lib/history';
 import { getNet, type Player } from '../../types';
 
+type Period = 'month' | '3months' | 'all';
+
+const PERIODS: { key: Period; label: string; days: number | null }[] = [
+  { key: 'month', label: 'חודש אחרון', days: 31 },
+  { key: '3months', label: '3 חודשים', days: 93 },
+  { key: 'all', label: 'הכל', days: null },
+];
+
+// Keeps games whose play date falls within the window. Undated rows are kept.
+function filterByPeriod(
+  games: GameHistoryEntry[],
+  period: Period,
+): GameHistoryEntry[] {
+  const def = PERIODS.find((p) => p.key === period);
+  if (!def || def.days == null) return games;
+  const cutoff = Date.now() - def.days * 86_400_000;
+  return games.filter((g) => {
+    const t = Date.parse(g.completedAt ?? g.updatedAt);
+    return Number.isNaN(t) ? true : t >= cutoff;
+  });
+}
+
 interface Props {
   onClose: () => void;
   onOpenGame: (gameId: string) => void;
@@ -19,6 +41,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
   const { activeGroupId, activeGroup } = useGroup();
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<Period>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -35,17 +58,22 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
     };
   }, [activeGroupId]);
 
+  // Games within the selected time window (by play date).
+  const inPeriod = useMemo(
+    () => (games ? filterByPeriod(games, period) : []),
+    [games, period],
+  );
   const leaderboard = useMemo(
-    () => (games ? computeLeaderboard(games) : []),
-    [games],
+    () => computeLeaderboard(inPeriod),
+    [inPeriod],
   );
   const active = useMemo(
-    () => (games ? games.filter((g) => g.isActive) : []),
-    [games],
+    () => inPeriod.filter((g) => g.isActive),
+    [inPeriod],
   );
   const finished = useMemo(
-    () => (games ? games.filter((g) => !g.isActive) : []),
-    [games],
+    () => inPeriod.filter((g) => !g.isActive),
+    [inPeriod],
   );
   // Largest absolute net on the board — scales the bar widths.
   const maxAbsNet = useMemo(
@@ -72,6 +100,23 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
         </h2>
       </header>
 
+      {games && games.length > 0 && (
+        <div className={styles.periods}>
+          {PERIODS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              className={`${styles.periodBtn} ${
+                period === p.key ? styles.periodOn : ''
+              }`}
+              onClick={() => setPeriod(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {error && <div className={styles.error}>שגיאה: {error}</div>}
       {!games && !error && <div className={styles.loading}>טוען…</div>}
 
@@ -79,6 +124,10 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
         <div className={styles.empty}>
           עדיין אין משחקים. צרו משחק חדש כדי להתחיל לבנות את ההיסטוריה.
         </div>
+      )}
+
+      {games && games.length > 0 && inPeriod.length === 0 && (
+        <div className={styles.empty}>אין משחקים בטווח הזמן שנבחר.</div>
       )}
 
       {active.length > 0 && (

@@ -227,6 +227,40 @@
   white-space: nowrap;
 }
 
+// ---- period filter ----
+.periods {
+  display: flex;
+  gap: $space-1;
+  padding: $space-1;
+  background: $bg-surface-raised;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-pill;
+}
+
+.periodBtn {
+  @include button-base;
+  flex: 1;
+  min-height: 36px;
+  padding: $space-1 $space-2;
+  border-radius: $radius-pill;
+  background: transparent;
+  color: $text-muted;
+  font-size: $font-size-sm;
+
+  &:not(:disabled):hover {
+    color: $text-primary;
+  }
+}
+
+.periodOn {
+  background: $accent;
+  color: $text-on-accent;
+
+  &:not(:disabled):hover {
+    color: $text-on-accent;
+  }
+}
+
 // ---- period awards (MVP / last) ----
 .awards {
   display: grid;
