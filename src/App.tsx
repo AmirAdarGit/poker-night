@@ -179,7 +179,12 @@ function AppInner() {
             />
             {user && activeGroupId && <GroupSwitcher onToast={showToast} />}
           </div>
-          <div className={styles.brand}>
+          <button
+            type="button"
+            className={styles.brand}
+            onClick={() => setView('game')}
+            aria-label="חזרה למשחק"
+          >
             <span className={styles.suit} aria-hidden="true">
               ♠
             </span>
@@ -187,7 +192,7 @@ function AppInner() {
             <span className={`${styles.suit} ${styles.suitRed}`} aria-hidden="true">
               ♦
             </span>
-          </div>
+          </button>
           <div className={styles.headerEnd}>
             {gameId && (
               <button

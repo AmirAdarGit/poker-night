@@ -56,10 +56,25 @@
 }
 
 .brand {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: $space-2;
   justify-self: center;
+  padding: $space-1 $space-2;
+  border-radius: $radius-md;
+  transition: transform $dur-fast $ease-out, background $dur-fast $ease-out;
+
+  &:hover {
+    background: rgba(244, 208, 63, 0.06);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 .suit {
