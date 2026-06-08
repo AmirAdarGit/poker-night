@@ -7,14 +7,28 @@
 
 .trigger {
   @include button-base;
-  min-height: 36px;
+  min-height: 38px;
   padding: $space-1 $space-3;
   gap: $space-2;
-  background: $bg-surface-raised;
+  background: linear-gradient(180deg, $bg-surface-raised, $bg-surface);
   color: $text-primary;
-  border-color: $border-subtle;
+  border-color: $border-strong;
+  border-radius: $radius-pill;
   font-weight: $font-weight-semibold;
-  max-width: 160px;
+  font-size: $font-size-sm;
+  max-width: 190px;
+  box-shadow: $shadow-sm;
+
+  &:not(:disabled):hover {
+    border-color: $accent;
+    background: $bg-surface-raised;
+  }
+}
+
+.triggerIcon {
+  color: $accent;
+  font-size: $font-size-sm;
+  flex-shrink: 0;
 }
 
 .triggerName {
@@ -26,6 +40,7 @@
 .chevron {
   font-size: 9px;
   color: $text-muted;
+  flex-shrink: 0;
 }
 
 .menu {

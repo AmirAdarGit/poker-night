@@ -164,34 +164,45 @@ function AppInner() {
     <div className={styles.app}>
       <OfflineBanner status={syncStatus} />
 
-      <header className={styles.header}>
-        <div className={styles.headerStart}>
-          <UserMenu
-            onOpenHistory={() => {
-              if (!user) {
-                setView('auth');
-                return;
-              }
-              setView('history');
-            }}
-            onOpenAuth={() => setView('auth')}
-          />
-          {user && activeGroupId && <GroupSwitcher onToast={showToast} />}
-        </div>
-        <h1 className={styles.title}>פוקר נייט</h1>
-        <div className={styles.headerEnd}>
-          {gameId && (
-            <button
-              type="button"
-              className={styles.shareButton}
-              onClick={handleShare}
-              aria-label="שיתוף קישור למשחק"
-            >
-              שיתוף
-            </button>
-          )}
-        </div>
-      </header>
+      <div className={styles.appbar}>
+        <header className={styles.header}>
+          <div className={styles.headerStart}>
+            <UserMenu
+              onOpenHistory={() => {
+                if (!user) {
+                  setView('auth');
+                  return;
+                }
+                setView('history');
+              }}
+              onOpenAuth={() => setView('auth')}
+            />
+            {user && activeGroupId && <GroupSwitcher onToast={showToast} />}
+          </div>
+          <div className={styles.brand}>
+            <span className={styles.suit} aria-hidden="true">
+              ♠
+            </span>
+            <h1 className={styles.title}>פוקר נייט</h1>
+            <span className={`${styles.suit} ${styles.suitRed}`} aria-hidden="true">
+              ♦
+            </span>
+          </div>
+          <div className={styles.headerEnd}>
+            {gameId && (
+              <button
+                type="button"
+                className={styles.shareButton}
+                onClick={handleShare}
+                aria-label="שיתוף קישור למשחק"
+              >
+                <span aria-hidden="true">↗</span>
+                שיתוף
+              </button>
+            )}
+          </div>
+        </header>
+      </div>
 
       <main className={styles.main}>
         {view === 'history' && user ? (

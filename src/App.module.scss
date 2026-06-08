@@ -15,12 +15,29 @@
   color: $text-muted;
 }
 
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: $z-banner;
+  width: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 31, 23, 0.92) 0%,
+    rgba(7, 20, 14, 0.72) 100%
+  );
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border-bottom: 1px solid $border-subtle;
+  // faint gold hairline glow under the bar
+  box-shadow: 0 1px 0 rgba(244, 208, 63, 0.08), $shadow-md;
+}
+
 .header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: $space-3;
-  padding: $space-5 $space-4 $space-3;
+  padding: $space-3 $space-4;
   max-width: $max-width;
   width: 100%;
   margin: 0 auto;
@@ -28,36 +45,70 @@
 
 .headerStart {
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  min-width: 0;
 }
 
 .headerEnd {
   justify-self: end;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  justify-self: center;
+}
+
+.suit {
+  font-size: $font-size-sm;
+  color: $accent;
+  opacity: 0.7;
+  transform: translateY(1px);
+}
+
+.suitRed {
+  color: $negative;
+}
+
 .title {
   margin: 0;
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
-  color: $text-primary;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  background: linear-gradient(180deg, $gold-500 0%, $gold-600 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .shareButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   appearance: none;
-  background: transparent;
-  border: 1px solid $border-strong;
-  color: $text-primary;
+  background: rgba(244, 208, 63, 0.08);
+  border: 1px solid rgba(244, 208, 63, 0.35);
+  color: $accent;
   padding: $space-2 $space-4;
   border-radius: $radius-pill;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   cursor: pointer;
   min-height: 36px;
-  transition: background $dur-fast $ease-out, border-color $dur-fast $ease-out;
+  transition: background $dur-fast $ease-out, border-color $dur-fast $ease-out,
+    transform $dur-fast $ease-out;
 
   &:hover {
-    background: $bg-surface-raised;
+    background: rgba(244, 208, 63, 0.16);
     border-color: $accent;
+  }
+
+  &:active {
+    transform: scale(0.97);
   }
 }
 

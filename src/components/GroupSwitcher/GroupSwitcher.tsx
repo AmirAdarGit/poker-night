@@ -52,6 +52,9 @@ export function GroupSwitcher({ onToast }: Props) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
+        <span className={styles.triggerIcon} aria-hidden="true">
+          ♣
+        </span>
         <span className={styles.triggerName}>{activeGroup.name}</span>
         <span aria-hidden="true" className={styles.chevron}>
           {open ? '▲' : '▼'}
