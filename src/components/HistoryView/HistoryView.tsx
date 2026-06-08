@@ -41,7 +41,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
   const { activeGroupId, activeGroup } = useGroup();
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<Period>('all');
+  const [period, setPeriod] = useState<Period>('month');
 
   useEffect(() => {
     let cancelled = false;
