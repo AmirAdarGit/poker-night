@@ -107,6 +107,28 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
         </div>
       )}
 
+      {leaderboard.length >= 2 && (
+        <div className={styles.awards}>
+          <div className={`${styles.award} ${styles.awardMvp}`}>
+            <span className={styles.awardLabel}>★ MVP התקופה</span>
+            <span className={styles.awardName}>{leaderboard[0]!.name}</span>
+            <span className={`${styles.awardNet} ${styles.statPositive}`}>
+              {leaderboard[0]!.totalNet >= 0 ? '+' : ''}
+              {leaderboard[0]!.totalNet} ₪
+            </span>
+          </div>
+          <div className={`${styles.award} ${styles.awardLast}`}>
+            <span className={styles.awardLabel}>אדום התקופה</span>
+            <span className={styles.awardName}>
+              {leaderboard[leaderboard.length - 1]!.name}
+            </span>
+            <span className={`${styles.awardNet} ${styles.statNegative}`}>
+              {leaderboard[leaderboard.length - 1]!.totalNet} ₪
+            </span>
+          </div>
+        </div>
+      )}
+
       {leaderboard.length > 0 && (
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>טבלת מובילים</h3>

@@ -227,6 +227,51 @@
   white-space: nowrap;
 }
 
+// ---- period awards (MVP / last) ----
+.awards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-3;
+}
+
+.award {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-4 $space-3;
+  text-align: center;
+}
+
+.awardMvp {
+  border-color: $accent;
+}
+
+.awardLast {
+  border-color: $negative;
+}
+
+.awardLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+}
+
+.awardName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.awardNet {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
 // ---- leaderboard ----
 .board {
   list-style: none;
