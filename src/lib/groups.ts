@@ -41,20 +41,20 @@ export async function fetchMyGroups(): Promise<Group[]> {
 
 export async function createGroup(
   name: string,
-  ownerId: string,
 ): Promise<{ ok: true; group: Group } | { ok: false; error: string }> {
   if (!supabase) return { ok: false, error: 'supabase-not-configured' };
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: 'empty-name' };
-  // invite_code is filled by the gen_invite_code() column default; the
-  // on_group_created trigger adds the owner as a member.
-  const { data, error } = await supabase
-    .from('groups')
-    .insert({ name: trimmed, owner_id: ownerId })
-    .select('id, name, owner_id, invite_code, created_at')
-    .single();
-  if (error || !data) return { ok: false, error: error?.message ?? 'insert-failed' };
-  return { ok: true, group: toGroup(data as GroupRow) };
+  // SECURITY DEFINER RPC inserts + returns the row, bypassing the RLS-return
+  // timing issue (membership is granted by an AFTER-INSERT trigger).
+  const { data, error } = await supabase.rpc('create_group', {
+    p_name: trimmed,
+  });
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? 'insert-failed' };
+  }
+  const row = (Array.isArray(data) ? data[0] : data) as GroupRow;
+  return { ok: true, group: toGroup(row) };
 }
 
 export async function joinGroupByCode(

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מכורים לקלף — תוצאות משחקים</title>
+<style>
+  :root{
+    --bg:#0c1410; --bg2:#13201a; --card:#16241d; --line:#243a30;
+    --felt:#0f5132; --gold:#e0b85c; --gold2:#f5d98a;
+    --txt:#e9efe9; --muted:#90a89a;
+    --win:#4ade80; --loss:#f87171; --neutral:#cbd5cb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Heebo","Segoe UI",Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1a2c22 0%,var(--bg) 60%);
+    color:var(--txt); line-height:1.6; padding:24px 16px 80px;
+  }
+  .wrap{max-width:1000px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:36px}
+  header .suits{font-size:26px;letter-spacing:6px;color:var(--gold);margin-bottom:6px}
+  header h1{
+    font-size:clamp(28px,6vw,46px);font-weight:800;
+    background:linear-gradient(180deg,var(--gold2),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  header .sub{color:var(--muted);margin-top:8px;font-size:15px}
+
+  .stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:26px 0 40px}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px 22px;text-align:center;min-width:120px;
+  }
+  .stat .n{font-size:28px;font-weight:800;color:var(--gold)}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+
+  h2.section{
+    font-size:22px;font-weight:800;margin:40px 0 16px;
+    display:flex;align-items:center;gap:10px;color:var(--gold2);
+  }
+  h2.section::before{content:"♠";color:var(--gold)}
+
+  /* leaderboard */
+  table{width:100%;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  thead th{
+    background:var(--bg2);color:var(--gold);font-weight:700;font-size:13px;
+    padding:12px 14px;text-align:right;border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:15px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#1b2c23}
+  .rank{font-weight:800;color:var(--muted);width:42px;text-align:center}
+  .rank.top1{color:#ffd700} .rank.top2{color:#c0c0c0} .rank.top3{color:#cd7f32}
+  .name{font-weight:700}
+  .amt{font-weight:800;text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+  .pos{color:var(--win)} .neg{color:var(--loss)} .zero{color:var(--neutral)}
+  .games-col{color:var(--muted);text-align:center}
+  .bar{height:8px;border-radius:5px;background:#23362c;overflow:hidden;min-width:60px}
+  .bar > i{display:block;height:100%}
+  .bar > i.p{background:linear-gradient(90deg,#16a34a,var(--win))}
+  .bar > i.n{background:linear-gradient(90deg,#dc2626,var(--loss));margin-right:auto}
+
+  /* game cards */
+  .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .game{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;position:relative;
+  }
+  .game::after{
+    content:"";position:absolute;inset:0 0 auto 0;height:3px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    border-radius:14px 14px 0 0;opacity:.5;
+  }
+  .game h3{font-size:16px;color:var(--gold2);margin-bottom:4px}
+  .game .time{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;align-items:center;
+    padding:5px 0;border-bottom:1px dashed #22332a;font-size:14px}
+  .row:last-child{border-bottom:none}
+  .row .pn{font-weight:600}
+  .row .pv{font-weight:800;direction:ltr;font-variant-numeric:tabular-nums}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:48px}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;
+    margin:10px 0 30px;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.win{background:var(--win)} .dot.loss{background:var(--loss)}
+  .note{text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="suits">♠ ♥ ♣ ♦</div>
+    <h1>מכורים לקלף</h1>
+    <div class="sub">תוצאות משחקים · 3 חודשים אחרונים · 13/3/2026 – 6/6/2026</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">12</div><div class="l">משחקים</div></div>
+    <div class="stat"><div class="n">10</div><div class="l">שחקנים</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">חודשים</div></div>
+  </div>
+
+  <h2 class="section">טבלת אלופים</h2>
+  <div class="legend">
+    <span><i class="dot win"></i> ברווח כולל</span>
+    <span><i class="dot loss"></i> בהפסד כולל</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="rank">#</th>
+        <th>שחקן</th>
+        <th class="amt">סה"כ ₪</th>
+        <th style="width:30%">מאזן</th>
+        <th class="games-col">משחקים</th>
+      </tr>
+    </thead>
+    <tbody id="lb"></tbody>
+  </table>
+  <p class="note">המספרים מבטאים נטו מצטבר (רווח חיובי / הפסד שלילי) לפי הרישומים שתועדו.</p>
+
+  <h2 class="section">פירוט לפי משחק</h2>
+  <div class="games" id="games"></div>
+
+  <footer>
+    ♠ נבנה מתוך קובץ התוצאות · מכורים לקלף ♦
+  </footer>
+
+</div>
+
+<script>
+// ----- data: net per player per game (+ win / - loss) -----
+const games = [
+  {date:"13/3/2026", time:"03:20", rows:[["אמיר",315],["ששון",460],["רז",16],["עומרי",-50],["ירדן",-140],["אייל",-151],["איתי",-150],["זולא",-300]]},
+  {date:"20/3/2026", time:"03:53", rows:[["עומרי",400],["עמית",196],["איתי",60],["אייל",5],["אמיר",-50],["ירדן",-115],["זולא",-196],["ששון",-300]]},
+  {date:"27/3/2026", time:"11:10", rows:[["איתי",145],["רז",130],["ששון",-58],["ירדן",-50],["אמיר",-200],["זולא",-220],["עומרי",-255]]},
+  {date:"3/4/2026", time:"02:58", rows:[["ירדן",370],["איתי",110],["ששון",71],["עמית",70],["רז",15],["אמיר",-50],["אייל",-200],["זולא",-450]]},
+  {date:"10/4/2026", time:"03:53", rows:[["זולא",300],["ששון",120],["אמיר",45],["אייל",-50],["עמית",-200],["איתי",-212]]},
+  {date:"17/4/2026", time:"02:21", rows:[["ירדן",57],["אייל",50],["אמיר",20],["איתמר",17],["רז",10],["זולא",-120]]},
+  {date:"24/4/2026", time:"03:24", rows:[["רז",275],["ששון",125],["אמיר",90],["אייל",75],["עומרי",-50],["ירדן",-50],["זולא",-440]]},
+  {date:"1/5/2026", time:"23:16", rows:[["ירדן",240],["ששון",150],["אמיר",129],["זולא",44],["אייל",-21],["איתמר",-100],["עמית",-48],["איתי",-129],["עומרי",-215]]},
+  {date:"8/5/2026", time:"02:41", rows:[["ירדן",120],["ששון",92],["אייל",-6],["איתי",-58],["עומרי",-150]]},
+  {date:"15/5/2026", time:"03:46", rows:[["אמיר",316],["רז",140],["זולא",90],["ירדן",30],["אייל",-100],["ששון",-206],["איתי",-262]]},
+  {date:"29/5/2026", time:"02:57", rows:[["ששון",590],["אייל",160],["רז",106],["איתי",-88],["ירדן",-150],["אמיר",-250],["זולא",-300]]},
+  {date:"5-6/6/2026", time:"03:06", rows:[["איתי",100],["אייל",40],["ירדן",25],["אמיר",-185]]},
+];
+
+const fmt = n => (n>0?"+":"") + n.toLocaleString("en-US");
+const cls = n => n>0?"pos":n<0?"neg":"zero";
+
+// ----- leaderboard -----
+const totals = {};
+games.forEach(g => g.rows.forEach(([p,v]) => {
+  totals[p] = totals[p] || {sum:0,games:0};
+  totals[p].sum += v; totals[p].games++;
+}));
+const board = Object.entries(totals)
+  .map(([name,d]) => ({name, ...d}))
+  .sort((a,b) => b.sum - a.sum);
+const maxAbs = Math.max(...board.map(p => Math.abs(p.sum)));
+
+const lb = document.getElementById("lb");
+board.forEach((p,i) => {
+  const rk = i+1;
+  const rkCls = rk<=3 ? " top"+rk : "";
+  const pct = (Math.abs(p.sum)/maxAbs*100).toFixed(0);
+  const barInner = p.sum>=0
+    ? `<i class="p" style="width:${pct}%"></i>`
+    : `<i class="n" style="width:${pct}%"></i>`;
+  lb.insertAdjacentHTML("beforeend", `
+    <tr>
+      <td class="rank${rkCls}">${rk}</td>
+      <td class="name">${p.name}</td>
+      <td class="amt ${cls(p.sum)}">${fmt(p.sum)}</td>
+      <td><div class="bar">${barInner}</div></td>
+      <td class="games-col">${p.games}</td>
+    </tr>`);
+});
+
+// ----- game cards -----
+const gc = document.getElementById("games");
+games.forEach(g => {
+  const rows = [...g.rows].sort((a,b)=>b[1]-a[1])
+    .map(([p,v]) => `<div class="row"><span class="pn">${p}</span><span class="pv ${cls(v)}">${fmt(v)}</span></div>`)
+    .join("");
+  gc.insertAdjacentHTML("beforeend", `
+    <div class="game">
+      <h3>משחק ${g.date}</h3>
+      <div class="time">תוצאה סופית · ${g.time}</div>
+      ${rows}
+    </div>`);
+});
+</script>
+</body>
+</html>

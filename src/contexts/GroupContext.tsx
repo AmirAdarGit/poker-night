@@ -85,7 +85,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   const createGroup = useCallback(
     async (name: string) => {
       if (!user) return { ok: false as const, error: 'not-signed-in' };
-      const res = await createGroupApi(name, user.id);
+      const res = await createGroupApi(name);
       if (res.ok) {
         setGroups((cur) => [...cur, res.group]);
         setActiveGroupId(res.group.id);
