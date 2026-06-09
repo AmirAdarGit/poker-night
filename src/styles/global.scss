@@ -22,7 +22,11 @@ body {
   font-size: $font-size-md;
   line-height: 1.45;
   color: $text-primary;
-  background: $bg-app;
+  // Near-black base with a soft felt-green glow from the top — "private table".
+  background-color: $bg-app;
+  background-image: $felt-glow;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;

@@ -1,41 +1,60 @@
 // =============================================================================
 // Design tokens — THE ONLY FILE IN THE PROJECT WHERE HEX COLORS ARE ALLOWED.
 // Every other .scss file must import these and use the named tokens.
+//
+// Palette: "private table" — near-black ink backgrounds, felt-green glow,
+// champagne-gold accents, emerald wins, diamond-red losses. Premium /
+// fintech-meets-casino. (Re-skin from the Claude Design redesign.)
 // =============================================================================
 
 // ---------- Color primitives ----------
-$felt-900: #07140e;
-$felt-800: #0d1f17;
-$felt-700: #122a20;
-$felt-600: #1a3a2c;
-$felt-500: #245040;
+// Ink/felt backgrounds, darkest → lightest surface.
+$felt-900: #07100c; // app base
+$felt-800: #0e1a14; // surface
+$felt-700: #122019; // raised / input
+$felt-600: #16271e; // elevated
+$felt-500: #1c3025; // highest surface / hover
 
-$ink-900: #f5f7f4;
-$ink-700: #cbd6cf;
-$ink-500: #8da199;
-$ink-400: #677a72;
-$ink-300: #4a5b54;
+// Felt-green accents (glow, table feel) — not used as plain surfaces.
+$felt-deep: #0c3326;
+$felt-green: #115c3f;
+$felt-bright: #1f8a5b;
 
-$line-700: #1f3a2e;
-$line-500: #2c5141;
+// Text, lightest → dimmest.
+$ink-900: #f3f1e9;
+$ink-700: #9aa9a0;
+$ink-500: #647168;
+$ink-400: #4c5a52;
+$ink-300: #3a4a42;
 
-$gold-500: #f4d03f;
-$gold-600: #d8b73a;
+// Hairlines / borders.
+$line-700: #21362b;
+$line-500: #2c473a;
 
-$win-500: #3ddc97;
-$win-600: #2bb87b;
+// Champagne-gold scale.
+$gold-100: #f7ecca;
+$gold-200: #efdca3;
+$gold-300: #e7c97e;
+$gold-400: #d9b461;
+$gold-500: #bd954a;
+$gold-600: #a07d3c;
 
-$loss-500: #ff5e5e;
-$loss-600: #d94646;
+// Emerald (wins).
+$win-500: #34d39a;
+$win-600: #2aa379;
 
-$warn-500: #f5a623;
+// Diamond red (losses).
+$loss-500: #ef6a5a;
+$loss-600: #e8584a;
+
+$warn-500: #d9b461;
 
 $whatsapp-500: #25d366;
 $whatsapp-600: #1faa52;
-$bit-500: #00c8b3;
-$bit-600: #00a896;
+$bit-500: #19c5c5;
+$bit-600: #14a5a5;
 
-$shadow-rgba: rgba(0, 0, 0, 0.45);
+$shadow-rgba: rgba(0, 0, 0, 0.5);
 
 // ---------- Semantic tokens ----------
 $bg-app: $felt-900;
@@ -48,13 +67,14 @@ $text-primary: $ink-900;
 $text-secondary: $ink-700;
 $text-muted: $ink-500;
 $text-disabled: $ink-400;
-$text-on-accent: $felt-900;
+$text-on-accent: #1a1305; // ink on gold
+$text-gold: $gold-300;
 
 $border-subtle: $line-700;
 $border-strong: $line-500;
 
-$accent: $gold-500;
-$accent-hover: $gold-600;
+$accent: $gold-400;
+$accent-hover: $gold-300;
 
 $positive: $win-500;
 $positive-hover: $win-600;
@@ -65,6 +85,15 @@ $brand-whatsapp: $whatsapp-500;
 $brand-whatsapp-hover: $whatsapp-600;
 $brand-bit: $bit-500;
 $brand-bit-hover: $bit-600;
+
+// Gradients + special-purpose treatments.
+$accent-gradient: linear-gradient(180deg, #f0d791 0%, #e0bc6c 48%, #cda251 100%);
+$gold-edge: rgba(231, 201, 126, 0.3);
+$felt-glow: radial-gradient(
+  120% 80% at 50% -10%,
+  rgba(31, 138, 91, 0.22) 0%,
+  rgba(12, 51, 38, 0) 60%
+);
 
 // ---------- Spacing ----------
 $space-1: 4px;
@@ -78,33 +107,36 @@ $space-8: 40px;
 $space-10: 56px;
 
 // ---------- Radius ----------
-$radius-sm: 6px;
-$radius-md: 10px;
-$radius-lg: 14px;
-$radius-xl: 20px;
+$radius-sm: 10px;
+$radius-md: 14px;
+$radius-lg: 18px;
+$radius-xl: 22px;
 $radius-pill: 999px;
 
 // ---------- Type ----------
-$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Heebo',
+$font-family-base: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI',
   'Rubik', 'Assistant', system-ui, Arial, sans-serif;
 
+$font-size-2xs: 11px;
 $font-size-xs: 12px;
-$font-size-sm: 14px;
-$font-size-md: 16px;
-$font-size-lg: 18px;
-$font-size-xl: 22px;
+$font-size-sm: 13px;
+$font-size-md: 15px;
+$font-size-lg: 19px;
+$font-size-xl: 25px;
 $font-size-2xl: 28px;
-$font-size-3xl: 36px;
+$font-size-3xl: 34px;
 
 $font-weight-regular: 400;
 $font-weight-medium: 500;
 $font-weight-semibold: 600;
 $font-weight-bold: 700;
+$font-weight-black: 800;
 
 // ---------- Shadows ----------
-$shadow-sm: 0 1px 2px $shadow-rgba;
-$shadow-md: 0 6px 18px $shadow-rgba;
-$shadow-lg: 0 18px 40px $shadow-rgba;
+$shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 28px rgba(0, 0, 0, 0.45);
+$shadow-md: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px rgba(0, 0, 0, 0.55);
+$shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
+$shadow-gold: 0 8px 22px rgba(214, 164, 71, 0.22);
 
 // ---------- Layout ----------
 $max-width: 720px;

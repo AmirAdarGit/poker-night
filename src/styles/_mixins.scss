@@ -7,6 +7,14 @@
   box-shadow: $shadow-sm;
 }
 
+// Raised/elevated surface with deeper depth — for hero panels & modals.
+@mixin card-raised {
+  background: $bg-surface-elevated;
+  border: 1px solid $border-strong;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+}
+
 @mixin button-base {
   display: inline-flex;
   align-items: center;
@@ -37,11 +45,14 @@
 
 @mixin button-primary {
   @include button-base;
-  background: $accent;
+  background: $accent-gradient;
   color: $text-on-accent;
+  border-color: $gold-edge;
+  font-weight: $font-weight-bold;
+  box-shadow: $shadow-gold;
 
   &:not(:disabled):hover {
-    background: $accent-hover;
+    filter: brightness(1.05);
   }
 }
 
@@ -99,5 +110,6 @@
   &:focus {
     outline: none;
     border-color: $accent;
+    box-shadow: 0 0 0 3px rgba(217, 180, 97, 0.15);
   }
 }
