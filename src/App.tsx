@@ -129,9 +129,16 @@ function AppInner() {
   }, [gameId, showToast, t]);
 
   const handleCloseGame = useCallback(async () => {
+    // Finalize the game (marks completed_at — it stays in History, reopenable
+    // from there), then leave it and return to a fresh new-game screen.
     await closeGame();
     showToast(t('toast.gameClosed'));
-  }, [closeGame, showToast, t]);
+    if (gameId) clearCachedGame(gameId);
+    setGameId(null);
+    setGameIdInUrl(null);
+    dispatch({ type: 'reset' });
+    setView('game');
+  }, [closeGame, showToast, t, gameId, dispatch]);
 
   const handleReopenGame = useCallback(async () => {
     await reopenGame();
