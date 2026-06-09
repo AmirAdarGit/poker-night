@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import styles from './OfflineBanner.module.scss';
 import type { SyncStatus } from '../../hooks/useGameSync';
 
@@ -6,19 +7,20 @@ interface Props {
 }
 
 export function OfflineBanner({ status }: Props) {
+  const { t } = useTranslation();
   if (status === 'live' || status === 'local') return null;
 
   let message = '';
   let kind: 'offline' | 'connecting' | 'error' = 'offline';
 
   if (status === 'connecting') {
-    message = 'מתחבר…';
+    message = t('offline.connecting');
     kind = 'connecting';
   } else if (status === 'offline') {
-    message = 'במצב לא מקוון — שינויים לא יסונכרנו עד שתחזור הגישה';
+    message = t('offline.offline');
     kind = 'offline';
   } else if (status === 'error') {
-    message = 'בעיית סנכרון — נסיון חיבור מחדש';
+    message = t('offline.error');
     kind = 'error';
   }
 

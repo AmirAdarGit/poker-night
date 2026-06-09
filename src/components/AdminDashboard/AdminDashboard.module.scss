@@ -1,0 +1,267 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.closeButton {
+  @include button-ghost;
+  width: 40px;
+  padding: 0;
+  font-size: $font-size-lg;
+}
+
+.title {
+  margin: 0;
+  flex: 1;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.viewAsPlayer {
+  @include button-secondary;
+  min-height: 36px;
+  padding: $space-2 $space-4;
+  font-size: $font-size-sm;
+}
+
+.generatedAt {
+  margin: -$space-3 0 0;
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: $space-7;
+  color: $text-muted;
+  border: 1px dashed $border-subtle;
+  border-radius: $radius-lg;
+}
+
+.error {
+  background: rgba(255, 94, 94, 0.12);
+  color: $negative;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+}
+
+// ---- sections ----
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.subTitle {
+  margin: $space-2 0 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $text-muted;
+}
+
+// ---- stat cards ----
+.statsCard {
+  @include card;
+  display: flex;
+  align-items: stretch;
+  padding: $space-4;
+}
+
+.statBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+  text-align: center;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $text-muted;
+}
+
+.statValue {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.statDivider {
+  width: 1px;
+  background: $border-subtle;
+  margin: $space-1 $space-2;
+}
+
+// ---- sparkline ----
+.sparkBlock {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-4;
+}
+
+.sparkTitle {
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+}
+
+.sparkBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 64px;
+}
+
+.sparkBar {
+  flex: 1;
+  min-width: 2px;
+  border-radius: $radius-sm $radius-sm 0 0;
+  background: $accent;
+  transition: height $dur-base $ease-out;
+}
+
+// ---- generic lists ----
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.listRow {
+  @include card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+}
+
+.listIdentity {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.listName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listMeta {
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.listValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $text-secondary;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rank {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  text-align: center;
+}
+
+// ---- users table ----
+.tableWrap {
+  @include card;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th,
+  td {
+    padding: $space-3 $space-4;
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $text-muted;
+    font-weight: $font-weight-semibold;
+    border-bottom: 1px solid $border-subtle;
+  }
+
+  tbody tr {
+    border-bottom: 1px dashed $border-subtle;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.tdName {
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.tdMuted {
+  color: $text-muted;
+}
+
+.tdNum {
+  color: $text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+.proBadge {
+  display: inline-block;
+  padding: 2px $space-2;
+  border-radius: $radius-pill;
+  background: $accent;
+  color: $text-on-accent;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './HistoryView.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGroup } from '../../contexts/GroupContext';
@@ -11,10 +12,10 @@ import { getNet, type Player } from '../../types';
 
 type Period = 'month' | '3months' | 'all';
 
-const PERIODS: { key: Period; label: string; days: number | null }[] = [
-  { key: 'month', label: 'חודש אחרון', days: 31 },
-  { key: '3months', label: '3 חודשים', days: 93 },
-  { key: 'all', label: 'הכל', days: null },
+const PERIODS: { key: Period; labelKey: string; days: number | null }[] = [
+  { key: 'month', labelKey: 'history.periodMonth', days: 31 },
+  { key: '3months', labelKey: 'history.period3Months', days: 93 },
+  { key: 'all', labelKey: 'history.periodAll', days: null },
 ];
 
 // Keeps games whose play date falls within the window. Undated rows are kept.
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export function HistoryView({ onClose, onOpenGame }: Props) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { activeGroupId, activeGroup } = useGroup();
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
@@ -88,12 +90,12 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
           type="button"
           className={styles.closeButton}
           onClick={onClose}
-          aria-label="חזרה"
+          aria-label={t('history.back')}
         >
           ←
         </button>
         <h2 className={styles.title}>
-          היסטוריה וטבלת מובילים
+          {t('history.title')}
           {activeGroup && (
             <span className={styles.groupTag}> · {activeGroup.name}</span>
           )}
@@ -111,28 +113,26 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
               }`}
               onClick={() => setPeriod(p.key)}
             >
-              {p.label}
+              {t(p.labelKey)}
             </button>
           ))}
         </div>
       )}
 
-      {error && <div className={styles.error}>שגיאה: {error}</div>}
-      {!games && !error && <div className={styles.loading}>טוען…</div>}
+      {error && <div className={styles.error}>{t('history.error', { error })}</div>}
+      {!games && !error && <div className={styles.loading}>{t('history.loading')}</div>}
 
       {games && games.length === 0 && (
-        <div className={styles.empty}>
-          עדיין אין משחקים. צרו משחק חדש כדי להתחיל לבנות את ההיסטוריה.
-        </div>
+        <div className={styles.empty}>{t('history.emptyNoGames')}</div>
       )}
 
       {games && games.length > 0 && inPeriod.length === 0 && (
-        <div className={styles.empty}>אין משחקים בטווח הזמן שנבחר.</div>
+        <div className={styles.empty}>{t('history.emptyInPeriod')}</div>
       )}
 
       {active.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>משחקים פעילים</h3>
+          <h3 className={styles.sectionTitle}>{t('history.activeGames')}</h3>
           <ul className={styles.games}>
             {active.map((g) => (
               <li key={g.gameId} className={styles.gameRow}>
@@ -146,10 +146,13 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                       {formatDate(g.updatedAt)}
                     </span>
                     <span className={styles.gameMeta}>
-                      {g.playerCount} שחקנים · קופה {g.totalPot} ₪
+                      {t('history.gameMeta', {
+                        players: g.playerCount,
+                        pot: g.totalPot,
+                      })}
                     </span>
                   </div>
-                  <span className={styles.gameActive}>המשך משחק ←</span>
+                  <span className={styles.gameActive}>{t('history.continueGame')}</span>
                 </button>
               </li>
             ))}
@@ -160,20 +163,20 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
       {leaderboard.length >= 2 && (
         <div className={styles.awards}>
           <div className={`${styles.award} ${styles.awardMvp}`}>
-            <span className={styles.awardLabel}>★ MVP התקופה</span>
+            <span className={styles.awardLabel}>{t('history.mvp')}</span>
             <span className={styles.awardName}>{leaderboard[0]!.name}</span>
             <span className={`${styles.awardNet} ${styles.statPositive}`}>
               {leaderboard[0]!.totalNet >= 0 ? '+' : ''}
-              {leaderboard[0]!.totalNet} ₪
+              {leaderboard[0]!.totalNet} {t('common.currency')}
             </span>
           </div>
           <div className={`${styles.award} ${styles.awardLast}`}>
-            <span className={styles.awardLabel}>אדום התקופה</span>
+            <span className={styles.awardLabel}>{t('history.worst')}</span>
             <span className={styles.awardName}>
               {leaderboard[leaderboard.length - 1]!.name}
             </span>
             <span className={`${styles.awardNet} ${styles.statNegative}`}>
-              {leaderboard[leaderboard.length - 1]!.totalNet} ₪
+              {leaderboard[leaderboard.length - 1]!.totalNet} {t('common.currency')}
             </span>
           </div>
         </div>
@@ -181,7 +184,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
 
       {leaderboard.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>טבלת מובילים</h3>
+          <h3 className={styles.sectionTitle}>{t('history.leaderboard')}</h3>
           <ul className={styles.board}>
             {leaderboard.map((e, i) => {
               const pos = e.totalNet >= 0;
@@ -200,7 +203,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                         className={`${styles.boardNet} ${pos ? styles.statPositive : styles.statNegative}`}
                       >
                         {pos ? '+' : ''}
-                        {e.totalNet} ₪
+                        {e.totalNet} {t('common.currency')}
                       </span>
                     </div>
                     <div className={styles.barTrack}>
@@ -210,7 +213,10 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                       />
                     </div>
                     <span className={styles.boardSub}>
-                      {e.gamesPlayed} משחקים · שיא רווח {e.biggestWin} ₪
+                      {t('history.boardSub', {
+                        games: e.gamesPlayed,
+                        biggestWin: e.biggestWin,
+                      })}
                     </span>
                   </div>
                 </li>
@@ -222,7 +228,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
 
       {finished.length > 0 && (
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>פירוט לפי משחק</h3>
+          <h3 className={styles.sectionTitle}>{t('history.perGame')}</h3>
           <div className={styles.gameGrid}>
             {finished.map((g) => (
               <button
@@ -233,10 +239,12 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
               >
                 <div className={styles.gameCardHead}>
                   <span className={styles.gameCardDate}>
-                    משחק {formatDate(g.completedAt ?? g.updatedAt)}
+                    {t('history.gameCardDate', {
+                      date: formatDate(g.completedAt ?? g.updatedAt),
+                    })}
                   </span>
                   <span className={styles.gameCardMeta}>
-                    {g.playerCount} שחקנים
+                    {t('history.gameCardPlayers', { count: g.playerCount })}
                   </span>
                 </div>
                 <ul className={styles.gcRows}>
@@ -253,7 +261,7 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                         }
                       >
                         {row.active
-                          ? 'פעיל'
+                          ? t('history.active')
                           : `${row.net >= 0 ? '+' : ''}${row.net}`}
                       </span>
                     </li>

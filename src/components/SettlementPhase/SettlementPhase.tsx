@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './SettlementPhase.module.scss';
 import type { Player, Settlement } from '../../types';
 import { getNet, sumBuyIns, totalCashedOut, totalPot } from '../../types';
@@ -29,6 +30,7 @@ export function SettlementPhase({
   onCloseGame,
   onRequestNewGame,
 }: Props) {
+  const { t } = useTranslation();
   const ranked = useMemo(
     () =>
       [...players].sort((a, b) => {
@@ -98,27 +100,30 @@ export function SettlementPhase({
 
   return (
     <section className={styles.phase}>
-      <h2 className={styles.heading}>חישוב סופי</h2>
+      <h2 className={styles.heading}>{t('settlement.heading')}</h2>
 
       {!balanced && (
         <div className={styles.warning}>
           {stillIn.length > 0 ? (
             <>
-              <strong>שחקנים שעדיין לא יצאו:</strong>{' '}
+              <strong>{t('settlement.stillInLabel')}</strong>{' '}
               {stillIn.map((p) => p.name).join(', ')}
             </>
           ) : (
             <>
-              <strong>החישוב לא מאוזן:</strong> בקופה {pot} ₪, יצאו {out} ₪
-              ({diff > 0 ? '+' : ''}
-              {diff} ₪)
+              <strong>{t('settlement.unbalancedLabel')}</strong>{' '}
+              {t('settlement.unbalancedDetail', {
+                pot,
+                out,
+                diff: `${diff > 0 ? '+' : ''}${diff}`,
+              })}
             </>
           )}
         </div>
       )}
 
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>תוצאות</h3>
+        <h3 className={styles.sectionTitle}>{t('settlement.results')}</h3>
         <ul className={styles.results}>
           {ranked.map((p) => {
             const invested = sumBuyIns(p);
@@ -130,8 +135,11 @@ export function SettlementPhase({
                   <span className={styles.resultName}>{p.name}</span>
                   <span className={styles.resultMeta}>
                     {isOut
-                      ? `יצא עם ${p.cashedOut} ₪ · השקיע ${invested} ₪`
-                      : `עוד במשחק · השקיע ${invested} ₪`}
+                      ? t('settlement.cashedOutMeta', {
+                          cashedOut: p.cashedOut,
+                          invested,
+                        })
+                      : t('settlement.stillInMeta', { invested })}
                   </span>
                 </div>
                 {isOut ? (
@@ -141,10 +149,10 @@ export function SettlementPhase({
                     }`}
                   >
                     {net >= 0 ? '+' : ''}
-                    {net} ₪
+                    {net} {t('common.currency')}
                   </span>
                 ) : (
-                  <span className={styles.resultActive}>פעיל</span>
+                  <span className={styles.resultActive}>{t('settlement.active')}</span>
                 )}
               </li>
             );
@@ -153,12 +161,12 @@ export function SettlementPhase({
       </div>
 
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>העברות לסגירת חובות</h3>
+        <h3 className={styles.sectionTitle}>{t('settlement.transfersTitle')}</h3>
         {transfers.length === 0 ? (
           <div className={styles.empty}>
             {stillIn.length > 0
-              ? 'יוצגו כאן העברות לאחר שכל השחקנים יצאו'
-              : 'אין צורך בהעברות — החשבון מאוזן'}
+              ? t('settlement.transfersAfterCashOut')
+              : t('settlement.noTransfersBalanced')}
           </div>
         ) : (
           <>
@@ -170,7 +178,7 @@ export function SettlementPhase({
                   onClick={() => setPhonesOpen((o) => !o)}
                   aria-expanded={phonesOpen}
                 >
-                  <span>מספרי טלפון — לתשלום ב-bit ולתזכורות</span>
+                  <span>{t('settlement.phonesToggle')}</span>
                   <span aria-hidden="true">{phonesOpen ? '▲' : '▼'}</span>
                 </button>
                 {phonesOpen && (
@@ -183,7 +191,7 @@ export function SettlementPhase({
                           inputMode="tel"
                           dir="ltr"
                           className={styles.phoneInput}
-                          placeholder="050-000-0000"
+                          placeholder={t('settlement.phonePlaceholder')}
                           defaultValue={phones[p.id] ?? ''}
                           onBlur={(e) =>
                             commitPhone(p.id, p.name, e.target.value)
@@ -197,32 +205,34 @@ export function SettlementPhase({
             )}
 
             <ul className={styles.transfers}>
-              {transfers.map((t, i) => (
+              {transfers.map((tr, i) => (
                 <li
-                  key={`${t.fromId}-${t.toId}-${i}`}
+                  key={`${tr.fromId}-${tr.toId}-${i}`}
                   className={styles.transferRow}
                 >
                   <div className={styles.transferMain}>
-                    <span className={styles.transferFrom}>{t.from}</span>
+                    <span className={styles.transferFrom}>{tr.from}</span>
                     <span className={styles.transferArrow}>←</span>
-                    <span className={styles.transferAmount}>{t.amount} ₪</span>
+                    <span className={styles.transferAmount}>
+                      {tr.amount} {t('common.currency')}
+                    </span>
                     <span className={styles.transferArrow}>←</span>
-                    <span className={styles.transferTo}>{t.to}</span>
+                    <span className={styles.transferTo}>{tr.to}</span>
                   </div>
                   <div className={styles.transferActions}>
                     <button
                       type="button"
                       className={styles.bitButton}
-                      onClick={() => setBitTarget(t)}
+                      onClick={() => setBitTarget(tr)}
                     >
-                      שלם ב-bit
+                      {t('settlement.payWithBit')}
                     </button>
                     <button
                       type="button"
                       className={styles.remindButton}
-                      onClick={() => handleRemind(t)}
+                      onClick={() => handleRemind(tr)}
                     >
-                      תזכורת ב-WhatsApp
+                      {t('settlement.remindWhatsapp')}
                     </button>
                   </div>
                 </li>
@@ -237,7 +247,7 @@ export function SettlementPhase({
             className={styles.shareSummaryButton}
             onClick={handleShareSummary}
           >
-            שתף סיכום ב-WhatsApp
+            {t('settlement.shareSummary')}
           </button>
         )}
       </div>
@@ -248,21 +258,21 @@ export function SettlementPhase({
           className={styles.backButton}
           onClick={onBackToPlaying}
         >
-          חזרה למשחק
+          {t('settlement.backToGame')}
         </button>
         <button
           type="button"
           className={styles.closeButton}
           onClick={onCloseGame}
         >
-          סגור משחק
+          {t('settlement.closeGame')}
         </button>
         <button
           type="button"
           className={styles.newGameButton}
           onClick={onRequestNewGame}
         >
-          משחק חדש
+          {t('settlement.newGame')}
         </button>
       </div>
 

@@ -23,6 +23,14 @@ export interface Profile {
   display_name: string;
   email: string | null;
   created_at?: string;
+  // One-time Pro unlock — server-truth (only the activate-pro Edge Function can
+  // set these). Absent on legacy rows; treat undefined as not-pro.
+  is_pro?: boolean;
+  pro_since?: string | null;
+  // Admin flag — server-truth. Gates access to the admin dashboard.
+  is_admin?: boolean;
+  // BCP-47 locale captured at signup (e.g. 'he-IL'). Absent on legacy rows.
+  locale?: string | null;
 }
 
 export type Phase = 'setup' | 'playing' | 'settlement';

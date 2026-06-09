@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './SetupPhase.module.scss';
 import type { Player } from '../../types';
 import { DEFAULT_BUY_IN } from '../../types';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { roster, loading, add, rename, remove } = useRoster(groupId);
   const [defaultBuyIn, setDefaultBuyIn] = useState<string>(
@@ -77,7 +79,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
     }
     const updated = await rename(id, value);
     if (!updated) {
-      setEditError(`לא ניתן לשנות ל"${value}" — ייתכן שהשם כבר קיים`);
+      setEditError(t('setup.renameFailed', { value }));
       return;
     }
     // Keep an already-selected player's name in step with the roster rename.
@@ -94,7 +96,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
     setEditError(null);
     const ok = await remove(id);
     if (!ok) {
-      setEditError('מחיקה נכשלה');
+      setEditError(t('setup.deleteFailed'));
       return;
     }
     if (byRoster.has(id)) dispatch({ type: 'remove-player', id });
@@ -105,14 +107,12 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
   return (
     <section className={styles.setup}>
       <div className={styles.intro}>
-        <h2 className={styles.heading}>מי משחק?</h2>
-        <p className={styles.subheading}>
-          בחרו שחקנים מהרשימה. אפשר לשנות את סכום הכניסה לכל אחד.
-        </p>
+        <h2 className={styles.heading}>{t('setup.heading')}</h2>
+        <p className={styles.subheading}>{t('setup.subheading')}</p>
       </div>
 
       <label className={styles.defaultRow}>
-        <span className={styles.defaultLabel}>סכום כניסה ברירת מחדל</span>
+        <span className={styles.defaultLabel}>{t('setup.defaultBuyIn')}</span>
         <input
           type="number"
           inputMode="numeric"
@@ -121,15 +121,15 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
           onChange={(e) => setDefaultBuyIn(e.target.value)}
           min={0}
           step={10}
-          aria-label="סכום כניסה ברירת מחדל"
+          aria-label={t('setup.defaultBuyIn')}
         />
-        <span className={styles.currency}>₪</span>
+        <span className={styles.currency}>{t('common.currency')}</span>
       </label>
 
       {roster.length > 0 && (
         <div className={styles.rosterHeader}>
           <span className={styles.rosterHint}>
-            {editMode ? 'ערכו שמות או מחקו שחקנים' : 'בחרו שחקנים מהרשימה'}
+            {editMode ? t('setup.editHint') : t('setup.selectHint')}
           </span>
           <button
             type="button"
@@ -140,7 +140,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
               setEdits({});
             }}
           >
-            {editMode ? 'סיום' : '✎ עריכת שמות'}
+            {editMode ? t('setup.done') : t('setup.editNames')}
           </button>
         </div>
       )}
@@ -148,11 +148,9 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
       {editError && <div className={styles.editError}>{editError}</div>}
 
       {loading ? (
-        <div className={styles.empty}>טוען שחקנים…</div>
+        <div className={styles.empty}>{t('setup.loadingPlayers')}</div>
       ) : roster.length === 0 ? (
-        <div className={styles.empty}>
-          עדיין אין שחקנים בקבוצה — הוסיפו את הראשון למטה.
-        </div>
+        <div className={styles.empty}>{t('setup.noPlayers')}</div>
       ) : editMode ? (
         <ul className={styles.editList}>
           {roster.map((r) => (
@@ -170,14 +168,14 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
                     void handleRename(r.id, r.name);
                   }
                 }}
-                aria-label={`שם השחקן ${r.name}`}
+                aria-label={t('setup.playerNameLabel', { name: r.name })}
               />
               <button
                 type="button"
                 className={styles.saveButton}
                 onClick={() => void handleRename(r.id, r.name)}
                 disabled={(edits[r.id] ?? r.name).trim() === r.name}
-                aria-label={`שמור את ${r.name}`}
+                aria-label={t('setup.savePlayer', { name: r.name })}
               >
                 ✓
               </button>
@@ -185,7 +183,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
                 type="button"
                 className={styles.removeButton}
                 onClick={() => void handleDelete(r.id)}
-                aria-label={`מחק את ${r.name}`}
+                aria-label={t('setup.deletePlayer', { name: r.name })}
               >
                 ✕
               </button>
@@ -206,7 +204,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
                 aria-pressed={selected}
               >
                 {r.name}
-                {isYou && <span className={styles.youBadge}>אתה</span>}
+                {isYou && <span className={styles.youBadge}>{t('setup.you')}</span>}
               </button>
             );
           })}
@@ -217,7 +215,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
         <input
           type="text"
           className={styles.addNewInput}
-          placeholder="הוסף שחקן חדש לרשימה"
+          placeholder={t('setup.addNewPlaceholder')}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => {
@@ -233,7 +231,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
           onClick={() => void handleAddNew()}
           disabled={!newName.trim() || adding}
         >
-          הוסף
+          {t('setup.add')}
         </button>
       </div>
 
@@ -257,15 +255,15 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
                   }
                   min={0}
                   step={10}
-                  aria-label={`סכום כניסה של ${p.name}`}
+                  aria-label={t('setup.buyInOf', { name: p.name })}
                 />
-                <span className={styles.currency}>₪</span>
+                <span className={styles.currency}>{t('common.currency')}</span>
               </div>
               <button
                 type="button"
                 className={styles.removeButton}
                 onClick={() => dispatch({ type: 'remove-player', id: p.id })}
-                aria-label={`הסר את ${p.name}`}
+                aria-label={t('setup.removePlayer', { name: p.name })}
               >
                 ✕
               </button>
@@ -276,7 +274,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
 
       <div className={styles.footer}>
         <div className={styles.summary}>
-          {players.length} שחקנים · קופה התחלתית {initialPot} ₪
+          {t('setup.summary', { count: players.length, pot: initialPot })}
         </div>
         <button
           type="button"
@@ -284,7 +282,7 @@ export function SetupPhase({ groupId, players, dispatch, onStartGame }: Props) {
           onClick={onStartGame}
           disabled={!canStart}
         >
-          התחל משחק
+          {t('setup.startGame')}
         </button>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './App.module.scss';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GroupProvider, useGroup } from './contexts/GroupContext';
@@ -26,11 +27,15 @@ import { UserMenu } from './components/UserMenu/UserMenu';
 import { GroupSwitcher } from './components/GroupSwitcher/GroupSwitcher';
 import { NoGroup } from './components/GroupForms/NoGroup';
 import { HistoryView } from './components/HistoryView/HistoryView';
+import { AdminDashboard } from './components/AdminDashboard/AdminDashboard';
+import { Paywall } from './components/Paywall/Paywall';
+import { TrialBanner } from './components/TrialBanner/TrialBanner';
 
-type View = 'game' | 'history' | 'auth';
+type View = 'game' | 'history' | 'auth' | 'admin';
 
 function AppInner() {
-  const { user, profile, loading } = useAuth();
+  const { t } = useTranslation();
+  const { user, profile, loading, entitlement, isAdmin } = useAuth();
   const {
     activeGroupId,
     groups,
@@ -52,6 +57,7 @@ function AppInner() {
   const [view, setView] = useState<View>('game');
   const [toast, setToast] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -66,8 +72,8 @@ function AppInner() {
   }, [gameId, state.phase]);
 
   useEffect(() => {
-    if (lastError) showToast(`שגיאת סנכרון: ${lastError}`);
-  }, [lastError, showToast]);
+    if (lastError) showToast(t('toast.syncError', { error: lastError }));
+  }, [lastError, showToast, t]);
 
   // Redeem a ?join=<code> invite once the user is signed in.
   useEffect(() => {
@@ -77,11 +83,11 @@ function AppInner() {
       clearInviteCodeFromUrl();
       showToast(
         res.ok
-          ? `הצטרפת לקבוצה ${res.group.name}`
-          : 'קוד ההזמנה לא תקין',
+          ? t('toast.joinedGroup', { name: res.group.name })
+          : t('toast.invalidInvite'),
       );
     });
-  }, [user, pendingInvite, joinByCode, showToast]);
+  }, [user, pendingInvite, joinByCode, showToast, t]);
 
   const handleStartGame = useCallback(async () => {
     if (!user || !profile) {
@@ -89,7 +95,12 @@ function AppInner() {
       return;
     }
     if (!activeGroupId) {
-      showToast('בחרו או צרו קבוצה כדי להתחיל משחק');
+      showToast(t('toast.selectOrCreateGroup'));
+      return;
+    }
+    // Free trial used up → must unlock Pro before creating a new game.
+    if (entitlement?.locked) {
+      setShowPaywall(true);
       return;
     }
     if (state.players.length < 2) return;
@@ -97,35 +108,35 @@ function AppInner() {
     const next = { ...state, phase: 'playing' as const };
     const result = await createGame(id, user.id, activeGroupId, next);
     if (!result.ok) {
-      showToast(`לא ניתן ליצור משחק: ${result.error}`);
+      showToast(t('toast.createGameFailed', { error: result.error }));
       return;
     }
     setGameId(id);
     setGameIdInUrl(id);
     dispatch({ type: 'hydrate', state: next });
-  }, [user, profile, activeGroupId, state, dispatch, showToast]);
+  }, [user, profile, activeGroupId, entitlement, state, dispatch, showToast, t]);
 
   const handleShare = useCallback(async () => {
     if (!gameId) return;
     const url = buildGameUrl(gameId);
     const result = await shareGameLink(
       url,
-      'פוקר נייט',
-      'הצטרפו לצפייה במשחק בזמן אמת',
+      t('app.shareTitle'),
+      t('app.shareText'),
     );
-    if (result.kind === 'copied') showToast('הקישור הועתק');
-    else if (result.kind === 'failed') showToast('שיתוף נכשל');
-  }, [gameId, showToast]);
+    if (result.kind === 'copied') showToast(t('toast.linkCopied'));
+    else if (result.kind === 'failed') showToast(t('toast.shareFailed'));
+  }, [gameId, showToast, t]);
 
   const handleCloseGame = useCallback(async () => {
     await closeGame();
-    showToast('המשחק נסגר ✓');
-  }, [closeGame, showToast]);
+    showToast(t('toast.gameClosed'));
+  }, [closeGame, showToast, t]);
 
   const handleReopenGame = useCallback(async () => {
     await reopenGame();
-    showToast('המשחק נפתח מחדש');
-  }, [reopenGame, showToast]);
+    showToast(t('toast.gameReopened'));
+  }, [reopenGame, showToast, t]);
 
   const handleNewGame = useCallback(() => {
     if (gameId) clearCachedGame(gameId);
@@ -148,7 +159,7 @@ function AppInner() {
   );
 
   if (loading || (user && groupsLoading)) {
-    return <div className={styles.loadingScreen}>טוען…</div>;
+    return <div className={styles.loadingScreen}>{t('app.loading')}</div>;
   }
 
   // Logged in but no profile row (extremely rare — trigger should populate it).
@@ -176,6 +187,7 @@ function AppInner() {
                 setView('history');
               }}
               onOpenAuth={() => setView('auth')}
+              onOpenAdmin={() => setView('admin')}
             />
             {user && activeGroupId && <GroupSwitcher onToast={showToast} />}
           </div>
@@ -183,12 +195,12 @@ function AppInner() {
             type="button"
             className={styles.brand}
             onClick={() => setView('game')}
-            aria-label="חזרה למשחק"
+            aria-label={t('app.backToGame')}
           >
             <span className={styles.suit} aria-hidden="true">
               ♠
             </span>
-            <h1 className={styles.title}>פוקר נייט</h1>
+            <h1 className={styles.title}>{t('app.title')}</h1>
             <span className={`${styles.suit} ${styles.suitRed}`} aria-hidden="true">
               ♦
             </span>
@@ -199,10 +211,10 @@ function AppInner() {
                 type="button"
                 className={styles.shareButton}
                 onClick={handleShare}
-                aria-label="שיתוף קישור למשחק"
+                aria-label={t('app.shareGame')}
               >
                 <span aria-hidden="true">↗</span>
-                שיתוף
+                {t('app.share')}
               </button>
             )}
           </div>
@@ -210,7 +222,9 @@ function AppInner() {
       </div>
 
       <main className={styles.main}>
-        {view === 'history' && user ? (
+        {view === 'admin' && isAdmin ? (
+          <AdminDashboard onClose={() => setView('game')} />
+        ) : view === 'history' && user ? (
           <HistoryView
             onClose={() => setView('game')}
             onOpenGame={handleOpenGame}
@@ -219,13 +233,13 @@ function AppInner() {
           <>
             {gameId && completedAt && (
               <div className={styles.closedBanner}>
-                <span>המשחק סגור. אפשר לצפות, או לפתוח מחדש כדי לערוך.</span>
+                <span>{t('app.closedBanner')}</span>
                 <button
                   type="button"
                   className={styles.reopenButton}
                   onClick={handleReopenGame}
                 >
-                  פתח מחדש
+                  {t('app.reopen')}
                 </button>
               </div>
             )}
@@ -235,30 +249,34 @@ function AppInner() {
                 {!user ? (
                   <div className={styles.signedOutPanel}>
                     <h2 className={styles.signedOutTitle}>
-                      צריך להתחבר כדי ליצור משחק
+                      {t('signedOut.title')}
                     </h2>
                     <p className={styles.signedOutBody}>
-                      ההתחברות מאפשרת לשמור היסטוריה ולעקוב אחר רווח/הפסד
-                      לאורך זמן. כדי רק לצפות במשחק של חבר — פתחו את הקישור
-                      ששלח.
+                      {t('signedOut.body')}
                     </p>
                     <button
                       type="button"
                       className={styles.primaryCta}
                       onClick={() => setView('auth')}
                     >
-                      התחברות / הרשמה
+                      {t('signedOut.cta')}
                     </button>
                   </div>
                 ) : groups.length === 0 ? (
                   <NoGroup initialJoinCode={pendingInvite ?? undefined} />
                 ) : (
-                  <SetupPhase
-                    groupId={activeGroupId}
-                    players={state.players}
-                    dispatch={dispatch}
-                    onStartGame={handleStartGame}
-                  />
+                  <>
+                    <TrialBanner
+                      entitlement={entitlement}
+                      onUpgrade={() => setShowPaywall(true)}
+                    />
+                    <SetupPhase
+                      groupId={activeGroupId}
+                      players={state.players}
+                      dispatch={dispatch}
+                      onStartGame={handleStartGame}
+                    />
+                  </>
                 )}
               </>
             )}
@@ -290,12 +308,22 @@ function AppInner() {
 
       {confirmReset && (
         <ConfirmDialog
-          title="משחק חדש?"
-          message="הפעולה תנקה את המשחק הנוכחי במכשיר זה ותתחיל מחדש. המשחק הקיים יישאר זמין דרך הקישור."
-          confirmLabel="התחל משחק חדש"
-          cancelLabel="ביטול"
+          title={t('confirmNewGame.title')}
+          message={t('confirmNewGame.message')}
+          confirmLabel={t('confirmNewGame.confirm')}
+          cancelLabel={t('common.cancel')}
           onConfirm={handleNewGame}
           onCancel={() => setConfirmReset(false)}
+        />
+      )}
+
+      {showPaywall && (
+        <Paywall
+          onClose={() => setShowPaywall(false)}
+          onActivated={() => {
+            setShowPaywall(false);
+            void handleStartGame();
+          }}
         />
       )}
     </div>

@@ -6,6 +6,7 @@
 // and recipient still have to be entered by hand inside Bit.
 // =============================================================================
 
+import i18n from '../i18n';
 import type { Player, Settlement } from '../types';
 import { getNet } from '../types';
 
@@ -65,13 +66,17 @@ export function buildSettlementSummary(
     .filter((p) => p.cashedOut !== null)
     .sort((a, b) => getNet(b) - getNet(a));
 
-  const dateStr = date.toLocaleDateString('he-IL', {
+  const dateStr = date.toLocaleDateString(i18n.language || 'he-IL', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
 
-  const lines: string[] = [`🃏 פוקר נייט — ${dateStr}`, '', 'תוצאות:'];
+  const lines: string[] = [
+    i18n.t('payShare.summaryHeader', { date: dateStr }),
+    '',
+    i18n.t('payShare.summaryResults'),
+  ];
 
   ranked.forEach((p, i) => {
     const net = getNet(p);
@@ -81,9 +86,15 @@ export function buildSettlementSummary(
   });
 
   if (transfers.length > 0) {
-    lines.push('', 'התחשבנות:');
+    lines.push('', i18n.t('payShare.summarySettlement'));
     for (const t of transfers) {
-      lines.push(`• ${t.from} ← ${t.amount} ₪ ← ${t.to}`);
+      lines.push(
+        i18n.t('payShare.summaryTransfer', {
+          from: t.from,
+          amount: t.amount,
+          to: t.to,
+        }),
+      );
     }
   }
 
@@ -93,9 +104,9 @@ export function buildSettlementSummary(
 /** A short personal nudge sent to the player who owes money. */
 export function buildDebtReminder(t: Settlement): string {
   return [
-    `היי ${t.from} 👋`,
-    `מפוקר נייט — נשאר לך להעביר ל${t.to} ${t.amount} ₪.`,
-    'אפשר בביט 🙂',
+    i18n.t('payShare.reminderGreeting', { name: t.from }),
+    i18n.t('payShare.reminderBody', { to: t.to, amount: t.amount }),
+    i18n.t('payShare.reminderClosing'),
   ].join('\n');
 }
 

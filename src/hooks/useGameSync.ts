@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import i18n from '../i18n';
 import { gameReducer, type Action } from '../reducer/gameReducer';
 import {
   fetchGame,
@@ -67,7 +68,7 @@ export function useGameSync(gameId: string | null): GameSync {
     }
     if (!isSupabaseConfigured || !supabase) {
       setSyncStatus('error');
-      setLastError('Supabase לא מוגדר');
+      setLastError(i18n.t('sync.notConfigured'));
       return;
     }
 

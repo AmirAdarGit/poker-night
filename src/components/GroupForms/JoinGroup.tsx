@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './GroupForms.module.scss';
 import { useGroup } from '../../contexts/GroupContext';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function JoinGroup({ initialCode, onDone, bare }: Props) {
+  const { t } = useTranslation();
   const { joinByCode } = useGroup();
   const [code, setCode] = useState(initialCode ?? '');
   const [busy, setBusy] = useState(false);
@@ -26,19 +28,19 @@ export function JoinGroup({ initialCode, onDone, bare }: Props) {
     } else {
       setError(
         res.error === 'invalid-code'
-          ? 'קוד לא תקין. בדקו ונסו שוב.'
-          : 'ההצטרפות נכשלה. נסו שוב.',
+          ? t('groupForms.invalidCode')
+          : t('groupForms.joinFailed'),
       );
     }
   };
 
   const body = (
     <div className={styles.form}>
-      <span className={styles.label}>הצטרף עם קוד הזמנה</span>
+      <span className={styles.label}>{t('groupForms.joinLabel')}</span>
       <div className={styles.row}>
         <input
           className={styles.codeInput}
-          placeholder="קוד בן 8 תווים"
+          placeholder={t('groupForms.joinPlaceholder')}
           dir="ltr"
           maxLength={8}
           value={code}
@@ -56,7 +58,7 @@ export function JoinGroup({ initialCode, onDone, bare }: Props) {
           onClick={() => void submit()}
           disabled={!code.trim() || busy}
         >
-          {busy ? 'רגע…' : 'הצטרף'}
+          {busy ? t('common.wait') : t('groupForms.join')}
         </button>
       </div>
       {error && <div className={styles.error}>{error}</div>}

@@ -82,6 +82,8 @@
   font: inherit;
   font-size: $font-size-sm;
   text-align: start;
+  text-decoration: none;
+  display: block;
   padding: $space-3;
   border-radius: $radius-sm;
   cursor: pointer;
@@ -89,4 +91,49 @@
   &:hover {
     background: $bg-surface-elevated;
   }
+}
+
+.menuSection {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-3;
+  border-top: 1px solid $border-subtle;
+  border-bottom: 1px solid $border-subtle;
+}
+
+.menuSectionLabel {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.langGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-1;
+}
+
+.langOption {
+  appearance: none;
+  background: transparent;
+  border: 1px solid $border-subtle;
+  color: $text-primary;
+  font: inherit;
+  font-size: $font-size-sm;
+  text-align: center;
+  padding: $space-2;
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: $bg-surface-elevated;
+  }
+}
+
+.langActive {
+  border-color: $accent;
+  color: $accent;
+  font-weight: $font-weight-semibold;
 }

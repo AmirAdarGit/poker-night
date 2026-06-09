@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './PlayingPhase.module.scss';
 import type { Player } from '../../types';
 import { totalPot, DEFAULT_BUY_IN } from '../../types';
@@ -22,6 +23,7 @@ export function PlayingPhase({
   onCloseGame,
   onRequestNewGame,
 }: Props) {
+  const { t } = useTranslation();
   const { activeGroupId } = useGroup();
   const { roster, add } = useRoster(activeGroupId);
   const [showAdd, setShowAdd] = useState(false);
@@ -68,18 +70,18 @@ export function PlayingPhase({
     <section className={styles.phase}>
       <div className={styles.statsBar}>
         <div className={styles.stat}>
-          <span className={styles.statValue}>{pot} ₪</span>
-          <span className={styles.statLabel}>קופה</span>
+          <span className={styles.statValue}>{pot} {t('common.currency')}</span>
+          <span className={styles.statLabel}>{t('playing.pot')}</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.stat}>
           <span className={styles.statValue}>{activeCount}</span>
-          <span className={styles.statLabel}>במשחק</span>
+          <span className={styles.statLabel}>{t('playing.inGame')}</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.stat}>
           <span className={styles.statValue}>{cashedOutCount}</span>
-          <span className={styles.statLabel}>יצאו</span>
+          <span className={styles.statLabel}>{t('playing.cashedOut')}</span>
         </div>
       </div>
 
@@ -92,7 +94,7 @@ export function PlayingPhase({
       {showAdd ? (
         <div className={styles.addForm}>
           <label className={styles.addRow}>
-            <span className={styles.addLabel}>סכום כניסה</span>
+            <span className={styles.addLabel}>{t('playing.buyInAmount')}</span>
             <input
               type="number"
               inputMode="numeric"
@@ -101,14 +103,14 @@ export function PlayingPhase({
               onChange={(e) => setBuyIn(e.target.value)}
               min={0}
               step={10}
-              aria-label="סכום כניסה"
+              aria-label={t('playing.buyInAmountLabel')}
             />
-            <span className={styles.currency}>₪</span>
+            <span className={styles.currency}>{t('common.currency')}</span>
             <button
               type="button"
               className={styles.cancelAdd}
               onClick={() => setShowAdd(false)}
-              aria-label="ביטול"
+              aria-label={t('common.cancel')}
             >
               ✕
             </button>
@@ -133,7 +135,7 @@ export function PlayingPhase({
             <input
               type="text"
               className={styles.nameInput}
-              placeholder="שחקן חדש לרשימה"
+              placeholder={t('playing.newPlayerPlaceholder')}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
@@ -149,7 +151,7 @@ export function PlayingPhase({
               onClick={() => void handleAddNew()}
               disabled={!newName.trim() || adding}
             >
-              הוסף
+              {t('playing.add')}
             </button>
           </div>
         </div>
@@ -159,7 +161,7 @@ export function PlayingPhase({
           className={styles.addPlayerButton}
           onClick={() => setShowAdd(true)}
         >
-          + הוספת שחקן באמצע המשחק
+          {t('playing.addPlayerMidGame')}
         </button>
       )}
 
@@ -170,7 +172,7 @@ export function PlayingPhase({
           onClick={onGoToSettlement}
           disabled={!canSettle}
         >
-          סיום וחישוב חובות
+          {t('playing.settle')}
         </button>
         <div className={styles.footerRow}>
           <button
@@ -178,14 +180,14 @@ export function PlayingPhase({
             className={styles.closeButton}
             onClick={onCloseGame}
           >
-            סגור משחק
+            {t('playing.closeGame')}
           </button>
           <button
             type="button"
             className={styles.newGameButton}
             onClick={onRequestNewGame}
           >
-            משחק חדש
+            {t('playing.newGame')}
           </button>
         </div>
       </div>

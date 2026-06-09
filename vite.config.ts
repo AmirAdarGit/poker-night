@@ -14,6 +14,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    setupFiles: ['./src/test-setup.ts'],
     // Keep Vitest to the unit suite under src/; Playwright owns e2e/*.spec.ts.
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },

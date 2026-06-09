@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './GroupSwitcher.module.scss';
 import { useGroup } from '../../contexts/GroupContext';
 import { buildInviteUrl, shareGameLink } from '../../lib/share';
@@ -12,6 +13,7 @@ interface Props {
 type Panel = 'none' | 'create' | 'join';
 
 export function GroupSwitcher({ onToast }: Props) {
+  const { t } = useTranslation();
   const { groups, activeGroup, activeGroupId, setActiveGroupId } = useGroup();
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>('none');
@@ -35,11 +37,11 @@ export function GroupSwitcher({ onToast }: Props) {
     const url = buildInviteUrl(activeGroup.inviteCode);
     const res = await shareGameLink(
       url,
-      `הצטרפו לקבוצה ${activeGroup.name}`,
-      `קוד הזמנה: ${activeGroup.inviteCode}`,
+      t('groupSwitcher.shareInviteTitle', { name: activeGroup.name }),
+      t('groupSwitcher.shareInviteText', { code: activeGroup.inviteCode }),
     );
-    if (res.kind === 'copied') onToast('קישור ההזמנה הועתק');
-    else if (res.kind === 'failed') onToast('שיתוף נכשל');
+    if (res.kind === 'copied') onToast(t('toast.inviteLinkCopied'));
+    else if (res.kind === 'failed') onToast(t('toast.shareFailed'));
     setOpen(false);
   };
 
@@ -90,7 +92,7 @@ export function GroupSwitcher({ onToast }: Props) {
           )}
 
           <div className={styles.inviteRow}>
-            <span className={styles.inviteLabel}>קוד הזמנה</span>
+            <span className={styles.inviteLabel}>{t('groupSwitcher.inviteCode')}</span>
             <code className={styles.inviteCode}>{activeGroup.inviteCode}</code>
           </div>
           <button
@@ -98,7 +100,7 @@ export function GroupSwitcher({ onToast }: Props) {
             className={styles.action}
             onClick={() => void shareInvite()}
           >
-            שתף קישור הזמנה
+            {t('groupSwitcher.shareInvite')}
           </button>
 
           <div className={styles.sep} />
@@ -114,14 +116,14 @@ export function GroupSwitcher({ onToast }: Props) {
                 className={styles.action}
                 onClick={() => setPanel('create')}
               >
-                צור קבוצה חדשה
+                {t('groupSwitcher.createGroup')}
               </button>
               <button
                 type="button"
                 className={styles.action}
                 onClick={() => setPanel('join')}
               >
-                הצטרף עם קוד
+                {t('groupSwitcher.joinWithCode')}
               </button>
             </>
           )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import styles from './BitPayDialog.module.scss';
 import type { Settlement } from '../../types';
 import {
@@ -30,6 +31,7 @@ export function BitPayDialog({
   onSetCreditorPhone,
   onClose,
 }: Props) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(creditorPhone);
   const [copied, setCopied] = useState<'amount' | 'phone' | null>(null);
 
@@ -73,20 +75,26 @@ export function BitPayDialog({
     >
       <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
         <h2 id="bit-title" className={styles.title}>
-          תשלום ב-bit
+          {t('bitPay.title')}
         </h2>
         <p className={styles.line}>
-          <strong>{transfer.from}</strong> מעביר ל<strong>{transfer.to}</strong>
+          <Trans
+            i18nKey="bitPay.transferLine"
+            values={{ from: transfer.from, to: transfer.to }}
+            components={[<strong key="from" />, <strong key="to" />]}
+          />
         </p>
 
         <div className={styles.dataRow}>
-          <span className={styles.amount}>{transfer.amount} ₪</span>
+          <span className={styles.amount}>
+            {transfer.amount} {t('common.currency')}
+          </span>
           <button
             type="button"
             className={styles.copyButton}
             onClick={() => copy(String(transfer.amount), 'amount')}
           >
-            {copied === 'amount' ? 'הועתק ✓' : 'העתק סכום'}
+            {copied === 'amount' ? t('bitPay.copied') : t('bitPay.copyAmount')}
           </button>
         </div>
 
@@ -100,20 +108,20 @@ export function BitPayDialog({
               className={styles.copyButton}
               onClick={() => copy(displayPhone(normalized), 'phone')}
             >
-              {copied === 'phone' ? 'הועתק ✓' : 'העתק מספר'}
+              {copied === 'phone' ? t('bitPay.copied') : t('bitPay.copyPhone')}
             </button>
           </div>
         ) : (
           <label className={styles.field}>
             <span className={styles.fieldLabel}>
-              מספר הטלפון של {transfer.to} ב-bit
+              {t('bitPay.phoneFieldLabel', { name: transfer.to })}
             </span>
             <input
               type="tel"
               inputMode="tel"
               dir="ltr"
               className={styles.input}
-              placeholder="050-000-0000"
+              placeholder={t('bitPay.phonePlaceholder')}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               autoFocus
@@ -121,13 +129,10 @@ export function BitPayDialog({
           </label>
         )}
 
-        <p className={styles.note}>
-          ב-bit אי אפשר למלא סכום אוטומטית מאתר חיצוני — העתיקו את הסכום, פתחו
-          את האפליקציה והעבירו למספר שמופיע כאן.
-        </p>
+        <p className={styles.note}>{t('bitPay.note')}</p>
 
         <button type="button" className={styles.openButton} onClick={openBit}>
-          פתח את bit
+          {t('bitPay.open')}
         </button>
         <a
           className={styles.installLink}
@@ -135,10 +140,10 @@ export function BitPayDialog({
           target="_blank"
           rel="noopener noreferrer"
         >
-          אין לך את האפליקציה? להתקנת bit ›
+          {t('bitPay.install')}
         </a>
         <button type="button" className={styles.closeButton} onClick={onClose}>
-          סגירה
+          {t('bitPay.close')}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './PlayerCard.module.scss';
 import type { Player } from '../../types';
 import { sumBuyIns, getNet, DEFAULT_BUY_IN } from '../../types';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function PlayerCard({ player, dispatch }: Props) {
+  const { t } = useTranslation();
   const [rebuyAmount, setRebuyAmount] = useState<string>(
     String(DEFAULT_BUY_IN),
   );
@@ -55,8 +57,14 @@ export function PlayerCard({ player, dispatch }: Props) {
         <div className={styles.identity}>
           <h3 className={styles.name}>{player.name}</h3>
           <div className={styles.meta}>
-            השקיע {invested} ₪ · {player.buyIns.length}{' '}
-            {player.buyIns.length === 1 ? 'כניסה' : 'כניסות'}
+            {t('playerCard.invested', {
+              amount: invested,
+              count: player.buyIns.length,
+              entries:
+                player.buyIns.length === 1
+                  ? t('playerCard.entryOne')
+                  : t('playerCard.entryOther'),
+            })}
           </div>
         </div>
         {isCashedOut ? (
@@ -66,24 +74,24 @@ export function PlayerCard({ player, dispatch }: Props) {
             }`}
           >
             {net >= 0 ? '+' : ''}
-            {net} ₪
+            {net} {t('common.currency')}
           </div>
         ) : (
-          <div className={styles.activeBadge}>במשחק</div>
+          <div className={styles.activeBadge}>{t('playerCard.inGame')}</div>
         )}
       </header>
 
       {isCashedOut ? (
         <div className={styles.cashedOutRow}>
           <span className={styles.cashedOutLabel}>
-            יצא עם {player.cashedOut} ₪
+            {t('playerCard.cashedOutWith', { amount: player.cashedOut })}
           </span>
           <button
             type="button"
             className={styles.undoButton}
             onClick={() => dispatch({ type: 'undo-cash-out', id: player.id })}
           >
-            בטל יציאה
+            {t('playerCard.undoCashOut')}
           </button>
         </div>
       ) : (
@@ -99,11 +107,11 @@ export function PlayerCard({ player, dispatch }: Props) {
                 className={styles.amountInput}
                 value={cashOutAmount}
                 onChange={(e) => setCashOutAmount(e.target.value)}
-                placeholder="כמה יצא?"
+                placeholder={t('playerCard.cashOutPlaceholder')}
                 min={0}
                 step={10}
                 autoFocus
-                aria-label="סכום יציאה"
+                aria-label={t('playerCard.cashOutLabel')}
               />
               <button
                 type="button"
@@ -111,7 +119,7 @@ export function PlayerCard({ player, dispatch }: Props) {
                 onClick={handleCashOut}
                 disabled={!cashOutValid}
               >
-                אשר
+                {t('playerCard.confirm')}
               </button>
               <button
                 type="button"
@@ -120,7 +128,7 @@ export function PlayerCard({ player, dispatch }: Props) {
                   setShowCashOut(false);
                   setCashOutAmount('');
                 }}
-                aria-label="ביטול"
+                aria-label={t('playerCard.cancel')}
               >
                 ✕
               </button>
@@ -136,14 +144,14 @@ export function PlayerCard({ player, dispatch }: Props) {
                   onChange={(e) => setRebuyAmount(e.target.value)}
                   min={0}
                   step={10}
-                  aria-label="סכום כניסה נוספת"
+                  aria-label={t('playerCard.rebuyLabel')}
                 />
                 <button
                   type="button"
                   className={styles.rebuyButton}
                   onClick={handleRebuy}
                 >
-                  + כניסה
+                  {t('playerCard.addEntry')}
                 </button>
               </div>
               <button
@@ -151,7 +159,7 @@ export function PlayerCard({ player, dispatch }: Props) {
                 className={styles.cashOutButton}
                 onClick={() => setShowCashOut(true)}
               >
-                יציאה
+                {t('playerCard.cashOut')}
               </button>
             </>
           )}
@@ -162,9 +170,9 @@ export function PlayerCard({ player, dispatch }: Props) {
         type="button"
         className={styles.removeLink}
         onClick={() => dispatch({ type: 'remove-player', id: player.id })}
-        aria-label={`הסר את ${player.name} מהמשחק`}
+        aria-label={t('playerCard.removePlayerAria', { name: player.name })}
       >
-        הסר שחקן
+        {t('playerCard.removePlayer')}
       </button>
     </article>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './GroupForms.module.scss';
 import { useGroup } from '../../contexts/GroupContext';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function CreateGroup({ onDone, bare }: Props) {
+  const { t } = useTranslation();
   const { createGroup } = useGroup();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,17 +26,17 @@ export function CreateGroup({ onDone, bare }: Props) {
       setName('');
       onDone?.();
     } else {
-      setError('יצירת הקבוצה נכשלה. נסו שוב.');
+      setError(t('groupForms.createFailed'));
     }
   };
 
   const body = (
     <div className={styles.form}>
-      <span className={styles.label}>צור קבוצה חדשה</span>
+      <span className={styles.label}>{t('groupForms.createLabel')}</span>
       <div className={styles.row}>
         <input
           className={styles.input}
-          placeholder="שם הקבוצה (למשל: פוקר רביעי)"
+          placeholder={t('groupForms.createPlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
@@ -50,7 +52,7 @@ export function CreateGroup({ onDone, bare }: Props) {
           onClick={() => void submit()}
           disabled={!name.trim() || busy}
         >
-          {busy ? 'רגע…' : 'צור'}
+          {busy ? t('common.wait') : t('groupForms.create')}
         </button>
       </div>
       {error && <div className={styles.error}>{error}</div>}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './AuthScreen.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function AuthScreen({ onCancel }: Props) {
+  const { t } = useTranslation();
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -22,7 +24,7 @@ export function AuthScreen({ onCancel }: Props) {
     setError(null);
     setSubmitting(true);
     const r = await signInWithGoogle();
-    if (!r.ok) setError(r.error ?? 'התחברות נכשלה');
+    if (!r.ok) setError(r.error ?? t('auth.errorSignInFailed'));
     setSubmitting(false);
   };
 
@@ -32,15 +34,15 @@ export function AuthScreen({ onCancel }: Props) {
     setInfo(null);
 
     if (!email.trim() || !password) {
-      setError('אימייל וסיסמה נדרשים');
+      setError(t('auth.errorEmailPasswordRequired'));
       return;
     }
     if (mode === 'signup' && !displayName.trim()) {
-      setError('שם תצוגה נדרש');
+      setError(t('auth.errorDisplayNameRequired'));
       return;
     }
     if (mode === 'signup' && password.length < 6) {
-      setError('סיסמה חייבת להכיל לפחות 6 תווים');
+      setError(t('auth.errorPasswordTooShort'));
       return;
     }
 
@@ -52,22 +54,22 @@ export function AuthScreen({ onCancel }: Props) {
     setSubmitting(false);
 
     if (!result.ok) {
-      setError(result.error ?? 'אירעה שגיאה');
+      setError(result.error ?? t('auth.errorGeneric'));
       return;
     }
     if (mode === 'signup') {
-      setInfo(
-        'אם אימות אימייל פעיל, בדקו את תיבת הדואר. אחרת אתם מחוברים.',
-      );
+      setInfo(t('auth.signUpInfo'));
     }
   };
 
   return (
     <div className={styles.screen}>
       <div className={styles.card}>
-        <h1 className={styles.title}>פוקר נייט</h1>
+        <h1 className={styles.title}>{t('auth.title')}</h1>
         <p className={styles.subtitle}>
-          {mode === 'signin' ? 'כניסה לחשבון' : 'יצירת חשבון חדש'}
+          {mode === 'signin'
+            ? t('auth.subtitleSignIn')
+            : t('auth.subtitleSignUp')}
         </p>
 
         <button
@@ -79,11 +81,11 @@ export function AuthScreen({ onCancel }: Props) {
           <span className={styles.googleIcon} aria-hidden="true">
             G
           </span>
-          המשך עם Google
+          {t('auth.continueWithGoogle')}
         </button>
 
         <div className={styles.divider}>
-          <span>או</span>
+          <span>{t('auth.or')}</span>
         </div>
 
         <form className={styles.form} onSubmit={handleEmailSubmit}>
@@ -91,7 +93,7 @@ export function AuthScreen({ onCancel }: Props) {
             <input
               type="text"
               className={styles.input}
-              placeholder="שם תצוגה"
+              placeholder={t('auth.displayNamePlaceholder')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               autoComplete="name"
@@ -101,7 +103,7 @@ export function AuthScreen({ onCancel }: Props) {
           <input
             type="email"
             className={styles.input}
-            placeholder="אימייל"
+            placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -110,7 +112,7 @@ export function AuthScreen({ onCancel }: Props) {
           <input
             type="password"
             className={styles.input}
-            placeholder="סיסמה"
+            placeholder={t('auth.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
@@ -126,17 +128,17 @@ export function AuthScreen({ onCancel }: Props) {
             disabled={submitting}
           >
             {submitting
-              ? 'רגע…'
+              ? t('auth.submitting')
               : mode === 'signin'
-                ? 'התחברות'
-                : 'יצירת חשבון'}
+                ? t('auth.signIn')
+                : t('auth.signUp')}
           </button>
         </form>
 
         <div className={styles.footer}>
           {mode === 'signin' ? (
             <>
-              עדיין אין חשבון?{' '}
+              {t('auth.noAccount')}{' '}
               <button
                 type="button"
                 className={styles.toggleButton}
@@ -146,12 +148,12 @@ export function AuthScreen({ onCancel }: Props) {
                   setInfo(null);
                 }}
               >
-                יצירת חשבון
+                {t('auth.createAccount')}
               </button>
             </>
           ) : (
             <>
-              כבר יש חשבון?{' '}
+              {t('auth.haveAccount')}{' '}
               <button
                 type="button"
                 className={styles.toggleButton}
@@ -161,7 +163,7 @@ export function AuthScreen({ onCancel }: Props) {
                   setInfo(null);
                 }}
               >
-                כניסה
+                {t('auth.signInLink')}
               </button>
             </>
           )}
@@ -173,7 +175,7 @@ export function AuthScreen({ onCancel }: Props) {
             className={styles.cancelButton}
             onClick={onCancel}
           >
-            המשך לצפייה ללא חשבון
+            {t('auth.continueWithoutAccount')}
           </button>
         )}
       </div>
