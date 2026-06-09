@@ -231,7 +231,11 @@
     "perGame": "Detalhamento por jogo",
     "gameCardDate": "Jogo {{date}}",
     "gameCardPlayers": "{{count}} jogadores",
-    "active": "Ativo"
+    "active": "Ativo",
+    "deleteGame": "Excluir jogo",
+    "deleteConfirmTitle": "Excluir este jogo?",
+    "deleteConfirmMessage": "Isso exclui o jogo permanentemente para todos — não pode ser desfeito.",
+    "deleteConfirmYes": "Excluir permanentemente"
   },
   "trialBanner": {
     "gamesLeft_one": "Resta 1 jogo grátis",
@@ -290,6 +294,13 @@
     "tablePro": "Pro",
     "tableLocale": "Idioma",
     "playersEmpty": "Sem dados de usuários.",
-    "sparkEmpty": "Sem dados no período."
+    "sparkEmpty": "Sem dados no período.",
+    "recentGames": "Jogos recentes",
+    "gameActive": "ativo",
+    "gameRowMeta": "{{players}} jogadores · pote {{pot}} ₪",
+    "deleteGame": "Excluir jogo",
+    "deleteConfirmTitle": "Excluir este jogo?",
+    "deleteConfirmMessage": "Exclui o jogo permanentemente para todos os usuários — não pode ser desfeito.",
+    "deleteConfirmYes": "Excluir permanentemente"
   }
 }

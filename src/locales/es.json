@@ -231,7 +231,11 @@
     "perGame": "Desglose por partida",
     "gameCardDate": "Partida {{date}}",
     "gameCardPlayers": "{{count}} jugadores",
-    "active": "Activa"
+    "active": "Activa",
+    "deleteGame": "Eliminar partida",
+    "deleteConfirmTitle": "¿Eliminar esta partida?",
+    "deleteConfirmMessage": "Esto elimina la partida permanentemente para todos: no se puede deshacer.",
+    "deleteConfirmYes": "Eliminar permanentemente"
   },
   "trialBanner": {
     "gamesLeft_one": "Queda 1 partida gratis",
@@ -290,6 +294,13 @@
     "tablePro": "Pro",
     "tableLocale": "Idioma",
     "playersEmpty": "No hay datos de usuarios.",
-    "sparkEmpty": "No hay datos en el rango."
+    "sparkEmpty": "No hay datos en el rango.",
+    "recentGames": "Partidas recientes",
+    "gameActive": "activa",
+    "gameRowMeta": "{{players}} jugadores · bote {{pot}} ₪",
+    "deleteGame": "Eliminar partida",
+    "deleteConfirmTitle": "¿Eliminar esta partida?",
+    "deleteConfirmMessage": "Elimina la partida permanentemente para todos los usuarios: no se puede deshacer.",
+    "deleteConfirmYes": "Eliminar permanentemente"
   }
 }

@@ -235,7 +235,11 @@
     "gameCardPlayers_many": "{{count}} игроков",
     "gameCardPlayers_other": "{{count}} игрока",
     "gameCardPlayers": "{{count}} игроков",
-    "active": "Активна"
+    "active": "Активна",
+    "deleteGame": "Удалить игру",
+    "deleteConfirmTitle": "Удалить эту игру?",
+    "deleteConfirmMessage": "Игра будет навсегда удалена для всех — отменить нельзя.",
+    "deleteConfirmYes": "Удалить навсегда"
   },
   "trialBanner": {
     "gamesLeft_one": "Осталась {{count}} бесплатная игра",
@@ -308,6 +312,13 @@
     "tablePro": "Pro",
     "tableLocale": "Язык",
     "playersEmpty": "Нет данных о пользователях.",
-    "sparkEmpty": "Нет данных за период."
+    "sparkEmpty": "Нет данных за период.",
+    "recentGames": "Недавние игры",
+    "gameActive": "активна",
+    "gameRowMeta": "{{players}} игроков · банк {{pot}} ₪",
+    "deleteGame": "Удалить игру",
+    "deleteConfirmTitle": "Удалить эту игру?",
+    "deleteConfirmMessage": "Навсегда удаляет игру для всех пользователей — отменить нельзя.",
+    "deleteConfirmYes": "Удалить навсегда"
   }
 }

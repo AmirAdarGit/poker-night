@@ -231,7 +231,11 @@
     "perGame": "Aufschlüsselung nach Spiel",
     "gameCardDate": "Spiel {{date}}",
     "gameCardPlayers": "{{count}} Spieler",
-    "active": "Aktiv"
+    "active": "Aktiv",
+    "deleteGame": "Spiel löschen",
+    "deleteConfirmTitle": "Dieses Spiel löschen?",
+    "deleteConfirmMessage": "Dadurch wird das Spiel dauerhaft für alle gelöscht – das kann nicht rückgängig gemacht werden.",
+    "deleteConfirmYes": "Dauerhaft löschen"
   },
   "trialBanner": {
     "gamesLeft_one": "1 kostenloses Spiel übrig",
@@ -290,6 +294,13 @@
     "tablePro": "Pro",
     "tableLocale": "Sprache",
     "playersEmpty": "Keine Benutzerdaten.",
-    "sparkEmpty": "Keine Daten im Zeitraum."
+    "sparkEmpty": "Keine Daten im Zeitraum.",
+    "recentGames": "Letzte Spiele",
+    "gameActive": "aktiv",
+    "gameRowMeta": "{{players}} Spieler · Pot {{pot}} ₪",
+    "deleteGame": "Spiel löschen",
+    "deleteConfirmTitle": "Dieses Spiel löschen?",
+    "deleteConfirmMessage": "Löscht das Spiel dauerhaft für alle Benutzer – kann nicht rückgängig gemacht werden.",
+    "deleteConfirmYes": "Dauerhaft löschen"
   }
 }
