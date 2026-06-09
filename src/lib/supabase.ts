@@ -86,6 +86,17 @@ export async function createGame(
   return { ok: true };
 }
 
+// Permanently delete a game. RLS allows this only for the game's host
+// (host_id = auth.uid()) who is still a member of the group.
+export async function deleteGame(
+  id: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!supabase) return { ok: false, error: 'supabase-not-configured' };
+  const { error } = await supabase.from('games').delete().eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export async function updateGameState(
   id: string,
   state: GameState,

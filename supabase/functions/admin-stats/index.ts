@@ -45,9 +45,18 @@ interface ProfileRow {
 }
 
 interface GameRow {
+  id: string;
   host_id: string | null;
   created_at: string | null;
+  completed_at: string | null;
   state: unknown;
+}
+
+// Number of players recorded in a game's state (0 if unparseable).
+function playerCount(state: unknown): number {
+  if (!state || typeof state !== 'object') return 0;
+  const players = (state as { players?: unknown }).players;
+  return Array.isArray(players) ? players.length : 0;
 }
 
 // Sum of all buy-ins across all players for one game. Returns null if the
@@ -122,7 +131,7 @@ Deno.serve(async (req: Request) => {
   }
   const { data: gamesData, error: gamesErr } = await admin
     .from('games')
-    .select('host_id, created_at, state');
+    .select('id, host_id, created_at, completed_at, state');
   if (gamesErr) {
     return json({ ok: false, error: 'fetch-failed' }, 500);
   }
@@ -220,6 +229,24 @@ Deno.serve(async (req: Request) => {
   }
   const avgPot = potGames > 0 ? potSum / potGames : null;
 
+  // Recent games list (with ids) so the admin can inspect + delete individual
+  // games. Newest first, capped to keep the payload small.
+  const recentGames = [...games]
+    .sort((a, b) => {
+      const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return tb - ta;
+    })
+    .slice(0, 100)
+    .map((g) => ({
+      id: g.id,
+      createdAt: g.created_at,
+      hostName: g.host_id ? (nameById.get(g.host_id) ?? '') : '',
+      playerCount: playerCount(g.state),
+      pot: gamePot(g.state) ?? 0,
+      isActive: g.completed_at == null,
+    }));
+
   // ---- players -----------------------------------------------------------
   const localeCounts = new Map<string, number>();
   for (const p of profiles) {
@@ -263,6 +290,7 @@ Deno.serve(async (req: Request) => {
         gamesByDay,
         topHosts,
         avgPot,
+        recentGames,
       },
       players: {
         byLocale,

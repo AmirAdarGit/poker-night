@@ -188,6 +188,43 @@
   color: $text-muted;
 }
 
+// Stacked name + meta for the recent-games rows.
+.gameInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.activeTag {
+  color: $accent;
+  font-weight: $font-weight-semibold;
+}
+
+// Trash button on an admin game row.
+.deleteBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  background: $bg-surface-elevated;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: background $dur-fast $ease-out, border-color $dur-fast $ease-out;
+
+  &:hover {
+    background: $negative;
+    border-color: $negative;
+    color: $text-primary;
+  }
+}
+
 .listValue {
   font-size: $font-size-md;
   font-weight: $font-weight-bold;

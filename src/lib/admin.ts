@@ -23,6 +23,14 @@ export interface AdminStats {
     gamesByDay: { date: string; count: number }[];
     topHosts: { displayName: string; games: number }[];
     avgPot: number | null;
+    recentGames: {
+      id: string;
+      createdAt: string | null;
+      hostName: string;
+      playerCount: number;
+      pot: number;
+      isActive: boolean;
+    }[];
   };
   players: {
     byLocale: { locale: string; users: number }[];
@@ -52,4 +60,23 @@ export async function fetchAdminStats(): Promise<
   }
   if (!body.stats) return { ok: false, error: 'admin-stats-empty' };
   return { ok: true, stats: body.stats };
+}
+
+// Admin-only: permanently delete any game (across all users/groups). The
+// admin-delete-game Edge Function authorizes the caller server-side.
+export async function adminDeleteGame(
+  gameId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!supabase) return { ok: false, error: 'supabase-not-configured' };
+
+  const { data, error } = await supabase.functions.invoke('admin-delete-game', {
+    body: { gameId },
+  });
+  if (error) return { ok: false, error: error.message };
+
+  const body = data as { ok?: boolean; error?: string } | null;
+  if (!body || body.ok === false) {
+    return { ok: false, error: body?.error ?? 'admin-delete-failed' };
+  }
+  return { ok: true };
 }

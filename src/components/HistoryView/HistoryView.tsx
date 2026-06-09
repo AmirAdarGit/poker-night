@@ -8,6 +8,8 @@ import {
   fetchAllGames,
   type GameHistoryEntry,
 } from '../../lib/history';
+import { deleteGame } from '../../lib/supabase';
+import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { getNet, type Player } from '../../types';
 
 type Period = 'month' | '3months' | 'all';
@@ -44,6 +46,31 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
   const [games, setGames] = useState<GameHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>('month');
+  // Game the user asked to delete (host-only), pending confirmation.
+  const [pendingDelete, setPendingDelete] = useState<GameHistoryEntry | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+
+  // A signed-in host may delete games they created (RLS enforces this too).
+  const canDelete = (g: GameHistoryEntry) =>
+    !!profile?.id && g.hostId === profile.id;
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    setDeleting(true);
+    const res = await deleteGame(target.gameId);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (res.ok) {
+      setGames((prev) =>
+        prev ? prev.filter((x) => x.gameId !== target.gameId) : prev,
+      );
+    } else {
+      setError(res.error);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +181,17 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                   </div>
                   <span className={styles.gameActive}>{t('history.continueGame')}</span>
                 </button>
+                {canDelete(g) && (
+                  <button
+                    type="button"
+                    className={styles.deleteBtn}
+                    aria-label={t('history.deleteGame')}
+                    title={t('history.deleteGame')}
+                    onClick={() => setPendingDelete(g)}
+                  >
+                    🗑
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -231,8 +269,19 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
           <h3 className={styles.sectionTitle}>{t('history.perGame')}</h3>
           <div className={styles.gameGrid}>
             {finished.map((g) => (
+              <div key={g.gameId} className={styles.gameCardWrap}>
+              {canDelete(g) && (
+                <button
+                  type="button"
+                  className={styles.cardDeleteBtn}
+                  aria-label={t('history.deleteGame')}
+                  title={t('history.deleteGame')}
+                  onClick={() => setPendingDelete(g)}
+                >
+                  🗑
+                </button>
+              )}
               <button
-                key={g.gameId}
                 type="button"
                 className={styles.gameCard}
                 onClick={() => onOpenGame(g.gameId)}
@@ -268,9 +317,21 @@ export function HistoryView({ onClose, onOpenGame }: Props) {
                   ))}
                 </ul>
               </button>
+              </div>
             ))}
           </div>
         </div>
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={t('history.deleteConfirmTitle')}
+          message={t('history.deleteConfirmMessage')}
+          confirmLabel={deleting ? t('common.wait') : t('history.deleteConfirmYes')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </section>
   );

@@ -231,7 +231,11 @@
     "perGame": "Breakdown by game",
     "gameCardDate": "Game {{date}}",
     "gameCardPlayers": "{{count}} players",
-    "active": "Active"
+    "active": "Active",
+    "deleteGame": "Delete game",
+    "deleteConfirmTitle": "Delete this game?",
+    "deleteConfirmMessage": "This permanently deletes the game for everyone — it can't be undone.",
+    "deleteConfirmYes": "Delete permanently"
   },
   "trialBanner": {
     "gamesLeft_one": "1 free game left",
@@ -290,6 +294,13 @@
     "tablePro": "Pro",
     "tableLocale": "Language",
     "playersEmpty": "No user data.",
-    "sparkEmpty": "No data in range."
+    "sparkEmpty": "No data in range.",
+    "recentGames": "Recent games",
+    "gameActive": "active",
+    "gameRowMeta": "{{players}} players · pot {{pot}} ₪",
+    "deleteGame": "Delete game",
+    "deleteConfirmTitle": "Delete this game?",
+    "deleteConfirmMessage": "Permanently deletes the game for all users — cannot be undone.",
+    "deleteConfirmYes": "Delete permanently"
   }
 }

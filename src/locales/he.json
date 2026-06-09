@@ -231,7 +231,11 @@
     "perGame": "פירוט לפי משחק",
     "gameCardDate": "משחק {{date}}",
     "gameCardPlayers": "{{count}} שחקנים",
-    "active": "פעיל"
+    "active": "פעיל",
+    "deleteGame": "מחק משחק",
+    "deleteConfirmTitle": "למחוק את המשחק?",
+    "deleteConfirmMessage": "הפעולה תמחק את המשחק לצמיתות עבור כולם — אי אפשר לשחזר.",
+    "deleteConfirmYes": "מחק לצמיתות"
   },
   "trialBanner": {
     "gamesLeft_one": "נשאר משחק חינמי אחד",
@@ -290,6 +294,13 @@
     "tablePro": "Pro",
     "tableLocale": "שפה",
     "playersEmpty": "אין נתוני משתמשים.",
-    "sparkEmpty": "אין נתונים בטווח."
+    "sparkEmpty": "אין נתונים בטווח.",
+    "recentGames": "משחקים אחרונים",
+    "gameActive": "פעיל",
+    "gameRowMeta": "{{players}} שחקנים · קופה {{pot}} ₪",
+    "deleteGame": "מחק משחק",
+    "deleteConfirmTitle": "למחוק את המשחק?",
+    "deleteConfirmMessage": "מחיקה לצמיתות של המשחק עבור כל המשתמשים — אי אפשר לשחזר.",
+    "deleteConfirmYes": "מחק לצמיתות"
   }
 }

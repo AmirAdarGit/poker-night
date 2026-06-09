@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './AdminDashboard.module.scss';
-import { fetchAdminStats, type AdminStats } from '../../lib/admin';
+import {
+  adminDeleteGame,
+  fetchAdminStats,
+  type AdminStats,
+} from '../../lib/admin';
+import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
+
+type RecentGame = AdminStats['games']['recentGames'][number];
 
 interface Props {
   onClose: () => void;
@@ -11,6 +18,14 @@ export function AdminDashboard({ onClose }: Props) {
   const { t } = useTranslation();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<RecentGame | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = useCallback(async () => {
+    const res = await fetchAdminStats();
+    if (res.ok) setStats(res.stats);
+    else setError(res.error);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +44,16 @@ export function AdminDashboard({ onClose }: Props) {
       cancelled = true;
     };
   }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const res = await adminDeleteGame(pendingDelete.id);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (res.ok) await load();
+    else setError(res.error);
+  };
 
   return (
     <section className={styles.view}>
@@ -60,9 +85,23 @@ export function AdminDashboard({ onClose }: Props) {
 
           <UsersSection users={stats.users} />
           <RevenueSection revenue={stats.revenue} />
-          <GamesSection games={stats.games} />
+          <GamesSection
+            games={stats.games}
+            onAskDelete={(g) => setPendingDelete(g)}
+          />
           <PlayersSection players={stats.players} />
         </>
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={t('admin.deleteConfirmTitle')}
+          message={t('admin.deleteConfirmMessage')}
+          confirmLabel={deleting ? t('common.wait') : t('admin.deleteConfirmYes')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </section>
   );
@@ -126,7 +165,13 @@ function RevenueSection({ revenue }: { revenue: AdminStats['revenue'] }) {
 }
 
 // ---------- Game activity ----------
-function GamesSection({ games }: { games: AdminStats['games'] }) {
+function GamesSection({
+  games,
+  onAskDelete,
+}: {
+  games: AdminStats['games'];
+  onAskDelete: (g: RecentGame) => void;
+}) {
   const { t } = useTranslation();
   return (
     <div className={styles.section}>
@@ -151,6 +196,42 @@ function GamesSection({ games }: { games: AdminStats['games'] }) {
                   <span className={styles.listName}>{h.displayName}</span>
                 </div>
                 <span className={styles.listValue}>{t('admin.hostGames', { count: h.games })}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {games.recentGames && games.recentGames.length > 0 && (
+        <>
+          <h4 className={styles.subTitle}>{t('admin.recentGames')}</h4>
+          <ul className={styles.list}>
+            {games.recentGames.map((g) => (
+              <li key={g.id} className={styles.listRow}>
+                <div className={styles.gameInfo}>
+                  <span className={styles.listName}>
+                    {g.hostName || '—'}
+                    {g.isActive && (
+                      <span className={styles.activeTag}> · {t('admin.gameActive')}</span>
+                    )}
+                  </span>
+                  <span className={styles.listMeta}>
+                    {g.createdAt ? formatDate(g.createdAt) : '—'} ·{' '}
+                    {t('admin.gameRowMeta', {
+                      players: g.playerCount,
+                      pot: g.pot,
+                    })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.deleteBtn}
+                  aria-label={t('admin.deleteGame')}
+                  title={t('admin.deleteGame')}
+                  onClick={() => onAskDelete(g)}
+                >
+                  🗑
+                </button>
               </li>
             ))}
           </ul>
